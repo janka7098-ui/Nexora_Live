@@ -35,7 +35,6 @@ body{
     backdrop-filter:blur(15px);
     box-shadow:0 0 60px rgba(130,0,255,0.4);
     text-align:center;
-    animation:fadeIn 1s ease;
 }
 
 .logo{
@@ -137,11 +136,6 @@ button:hover{
     margin-bottom:10px;
     border-left:4px solid #00ff9d;
 }
-
-@keyframes fadeIn{
-    from{opacity:0; transform:translateY(20px);}
-    to{opacity:1; transform:translateY(0);}
-}
 </style>
 </head>
 <body>
@@ -149,7 +143,7 @@ button:hover{
 <!-- LOGIN -->
 <div id="login-view">
     <div class="login-card">
-        <img src="logo.png" class="logo">
+        <img src="Logotipo.png" class="Logotipo">
         <input id="username" placeholder="Usuario TikTok sin @" />
         <button onclick="connect()">Conectar a LIVE</button>
         <div class="status" id="status">Desconectado</div>
@@ -179,12 +173,26 @@ button:hover{
 
 <script>
 const socket = io();
+let ttsEnabled = false;
+
+/* 🔊 FUNCION TTS */
+function speak(text){
+    if(!ttsEnabled) return;
+
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = "es-MX";
+    speech.rate = 1;
+    speech.pitch = 1;
+    speech.volume = 1;
+    window.speechSynthesis.speak(speech);
+}
 
 function connect(){
     const username=document.getElementById("username").value;
     socket.emit("startConnection",{username});
 }
 
+/* ESTADO CONEXION */
 socket.on("status",(msg)=>{
     const status=document.getElementById("status");
 
@@ -194,6 +202,8 @@ socket.on("status",(msg)=>{
         document.getElementById("dashboard-view").style.display="flex";
         document.getElementById("liveUser").innerText=
             document.getElementById("username").value;
+
+        ttsEnabled = true; // activar voz después de interacción
     }
 
     if(msg==="error"){
@@ -205,12 +215,26 @@ socket.on("status",(msg)=>{
     }
 });
 
+/* 🎁 GIFTS */
 socket.on("gift",(data)=>{
     const container=document.getElementById("events");
     const div=document.createElement("div");
     div.className="event";
     div.innerHTML=`🎁 <strong>${data.user}</strong> envió ${data.gift} x${data.amount}`;
     container.prepend(div);
+
+    speak(`${data.user} envió ${data.gift}`);
+});
+
+/* 💬 CHAT CON VOZ */
+socket.on("chat",(data)=>{
+    const container=document.getElementById("events");
+    const div=document.createElement("div");
+    div.className="event";
+    div.innerHTML=`💬 <strong>${data.user}</strong>: ${data.message}`;
+    container.prepend(div);
+
+    speak(`${data.user} dice ${data.message}`);
 });
 </script>
 
