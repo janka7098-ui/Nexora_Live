@@ -26,7 +26,7 @@ width:360px;
 text-align:center;
 }
 
-input{
+input, select{
 width:100%;
 padding:12px;
 margin-bottom:12px;
@@ -63,6 +63,17 @@ align-items:center;
 justify-content:space-between;
 padding:0 20px;
 border-bottom:1px solid #222;
+}
+
+.tts-btn{
+background:#1a1a35;
+padding:8px 14px;
+border-radius:8px;
+cursor:pointer;
+}
+
+.tts-btn.active{
+background:linear-gradient(90deg,#7b2ff7,#00ff9d);
 }
 
 .container{
@@ -102,11 +113,21 @@ border-radius:8px;
 margin-bottom:10px;
 border-left:4px solid #00ff9d;
 }
+
+.action-card{
+background:#1a1a35;
+padding:10px;
+border-radius:8px;
+margin-bottom:8px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
+<!-- LOGIN -->
 <div id="loginScreen" class="card">
 <h2>NEXORA ACCESS</h2>
 <input id="accessKey" placeholder="Clave de acceso">
@@ -122,7 +143,11 @@ border-left:4px solid #00ff9d;
 <div>
 🟢 Conectado a <strong id="liveUser"></strong>
 </div>
+
+<div>
+<span id="ttsToggle" class="tts-btn active" onclick="toggleTTS()">🔊 TTS ACTIVADO</span>
 <button onclick="disconnectLive()">Desconectar</button>
+</div>
 </div>
 
 <div class="container">
@@ -130,13 +155,27 @@ border-left:4px solid #00ff9d;
 <div class="sidebar">
 <button class="menu-btn" onclick="showSection('chat')">💬 Chat</button>
 <button class="menu-btn" onclick="showSection('gifts')">🎁 Regalos</button>
+<button class="menu-btn" onclick="showSection('actions')">⚡ Acciones</button>
 </div>
 
 <div class="main">
+
 <div id="chat" class="section active"></div>
 <div id="gifts" class="section"></div>
+
+<div id="actions" class="section">
+<h3>Crear Acción por Regalo</h3>
+
+<input id="actionGift" placeholder="Nombre exacto del regalo (ej: Rose)">
+<input id="actionFile" placeholder="Ruta sonido ej: /media/rosa.mp3">
+<button onclick="createAction()">Crear Acción</button>
+
+<br><br>
+<h3>Acciones Configuradas</h3>
+<div id="actionList"></div>
 </div>
 
+</div>
 </div>
 </div>
 
@@ -144,10 +183,11 @@ border-left:4px solid #00ff9d;
 const socket = io();
 
 let tempUsername = "";
+let ttsEnabled = true;
+let actions = [];
 
-/* PASO 1: VALIDAR CLAVE */
+/* LOGIN */
 function validateAndConnect(){
-
 const key=document.getElementById("accessKey").value.trim();
 const username=document.getElementById("tiktokUser").value.trim();
 
@@ -156,17 +196,11 @@ document.getElementById("loginMsg").innerText="Completa todos los campos";
 return;
 }
 
-tempUsername = username;
-
-// Validar clave primero
+tempUsername=username;
 socket.emit("validateKey", key);
-
 }
 
-/* RESPUESTA CLAVE */
-
 socket.on("keyValid",()=>{
-// Ahora conectar TikTok
 socket.emit("startConnection",{ username: tempUsername });
 });
 
@@ -174,45 +208,100 @@ socket.on("keyInvalid",()=>{
 document.getElementById("loginMsg").innerText="Clave incorrecta";
 });
 
-/* RESPUESTA CONEXIÓN */
-
 socket.on("status",(status)=>{
-
 if(status==="connected"){
-
 document.getElementById("loginScreen").style.display="none";
 document.getElementById("dashboard").style.display="flex";
 document.getElementById("liveUser").innerText=tempUsername;
-
 }
 
 if(status==="error"){
-document.getElementById("loginMsg").innerText="No se pudo conectar a TikTok";
+document.getElementById("loginMsg").innerText="No se pudo conectar";
 }
 
 if(status==="disconnected"){
 location.reload();
 }
-
 });
 
-/* EVENTOS */
+/* CHAT + TTS */
+function toggleTTS(){
+ttsEnabled=!ttsEnabled;
+const btn=document.getElementById("ttsToggle");
+
+if(ttsEnabled){
+btn.classList.add("active");
+btn.innerText="🔊 TTS ACTIVADO";
+}else{
+btn.classList.remove("active");
+btn.innerText="🔇 TTS DESACTIVADO";
+}
+}
+
+function speak(text){
+if(!ttsEnabled) return;
+const speech=new SpeechSynthesisUtterance(text);
+speech.lang="es-MX";
+window.speechSynthesis.speak(speech);
+}
 
 socket.on("chat",(data)=>{
 const div=document.createElement("div");
 div.className="card-event";
 div.innerHTML=`💬 <strong>${data.user}</strong>: ${data.message}`;
 document.getElementById("chat").prepend(div);
+speak(`${data.user} dice ${data.message}`);
 });
 
+/* REGALOS */
 socket.on("gift",(data)=>{
 const div=document.createElement("div");
 div.className="card-event";
 div.innerHTML=`🎁 <strong>${data.user}</strong> envió ${data.gift} x${data.amount}`;
 document.getElementById("gifts").prepend(div);
+
+executeAction(data.gift);
 });
 
-/* UI */
+/* ACCIONES */
+function createAction(){
+const gift=document.getElementById("actionGift").value.trim();
+const file=document.getElementById("actionFile").value.trim();
+
+if(!gift || !file) return;
+
+actions.push({ gift, file });
+
+renderActions();
+}
+
+function renderActions(){
+const container=document.getElementById("actionList");
+container.innerHTML="";
+
+actions.forEach((a,index)=>{
+const div=document.createElement("div");
+div.className="action-card";
+div.innerHTML=`
+<span>🎁 ${a.gift}</span>
+<button onclick="deleteAction(${index})">❌</button>
+`;
+container.appendChild(div);
+});
+}
+
+function deleteAction(index){
+actions.splice(index,1);
+renderActions();
+}
+
+function executeAction(giftName){
+const action=actions.find(a=>a.gift.toLowerCase()===giftName.toLowerCase());
+if(!action) return;
+
+const audio=new Audio(action.file);
+audio.play().catch(err=>console.log("Error audio:",err));
+}
 
 function showSection(id){
 document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
