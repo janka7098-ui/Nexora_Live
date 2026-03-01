@@ -9,154 +9,86 @@ const io = socketIo(server);
 
 app.use(express.static("public"));
 
-/* ================================
-   🔐 CLAVES PERMITIDAS (10 AMIGOS)
-================================ */
 const allowedKeys = [
   "nexora01","nexora02","nexora03","nexora04","nexora05",
   "nexora06","nexora07","nexora08","nexora09","nexora10"
 ];
 
-/* ================================
-   🔥 CONEXIONES ACTIVAS
-================================ */
 const activeConnections = new Map();
 
 io.on("connection", (socket) => {
 
-    console.log("🟢 Usuario conectado:", socket.id);
+  socket.on("validateKey", (key) => {
+    if (allowedKeys.includes(key)) {
+      socket.emit("keyValid");
+    } else {
+      socket.emit("keyInvalid");
+    }
+  });
 
-    /* ================================
-       VALIDAR CLAVE
-    ================================ */
-    socket.on("validateKey", (key) => {
-        if (allowedKeys.includes(key)) {
-            socket.emit("keyValid");
-        } else {
-            socket.emit("keyInvalid");
-        }
-    });
+  socket.on("startConnection", async ({ username }) => {
 
-    /* ================================
-       CONECTAR TIKTOK
-    ================================ */
-    socket.on("startConnection", async ({ username }) => {
+    if (!username) return;
 
-        if (!username) return;
+    if (activeConnections.has(socket.id)) {
+      try { activeConnections.get(socket.id).disconnect(); } catch {}
+      activeConnections.delete(socket.id);
+    }
 
-        console.log("🔥 Intentando conectar a:", username);
+    const tiktok = new WebcastPushConnection(username);
 
-        // Si ya tenía conexión previa, cerrarla
-        if (activeConnections.has(socket.id)) {
-            try {
-                activeConnections.get(socket.id).disconnect();
-            } catch {}
-            activeConnections.delete(socket.id);
-        }
+    try {
 
-        const tiktok = new WebcastPushConnection(username);
+      await tiktok.connect();
+      activeConnections.set(socket.id, tiktok);
 
-        try {
+      socket.emit("status", "connected");
 
-            await tiktok.connect();
+      // 🎁 REGALOS (ANTI DUPLICADO)
+      tiktok.on("gift", (data) => {
 
-            activeConnections.set(socket.id, tiktok);
-
-            socket.emit("status", "connected");
-
-            console.log("✅ Conectado a TikTok:", username);
-
-            /* ================================
-               🎁 REGALOS (ANTI DUPLICADO)
-            ================================ */
-            tiktok.on("gift", (data) => {
-
-                // SOLO cuando termina el regalo
-                if (data.repeatEnd) {
-
-                    socket.emit("gift", {
-                        user: data.nickname,
-                        gift: data.giftName,
-                        amount: data.repeatCount
-                    });
-
-                }
-            });
-
-            /* ================================
-               💬 CHAT
-            ================================ */
-            tiktok.on("chat", (data) => {
-
-                socket.emit("chat", {
-                    user: data.nickname,
-                    message: data.comment
-                });
-
-            });
-
-            /* ================================
-               ❌ ERROR
-            ================================ */
-            tiktok.on("error", (err) => {
-                console.log("❌ Error TikTok:", err);
-                socket.emit("status", "error");
-            });
-
-        } catch (error) {
-
-            console.log("❌ Error conectando:", error);
-            socket.emit("status", "error");
-
+        if (data.repeatEnd) {
+          socket.emit("gift", {
+            user: data.nickname,
+            gift: data.giftName,
+            amount: data.repeatCount
+          });
         }
 
-    });
+      });
 
-    /* ================================
-       DESCONECTAR LIVE MANUAL
-    ================================ */
-    socket.on("disconnectLive", () => {
+      // 💬 CHAT
+      tiktok.on("chat", (data) => {
+        socket.emit("chat", {
+          user: data.nickname,
+          message: data.comment
+        });
+      });
 
-        if (activeConnections.has(socket.id)) {
+    } catch (err) {
+      socket.emit("status", "error");
+    }
 
-            try {
-                activeConnections.get(socket.id).disconnect();
-            } catch {}
+  });
 
-            activeConnections.delete(socket.id);
+  socket.on("disconnectLive", () => {
+    if (activeConnections.has(socket.id)) {
+      try { activeConnections.get(socket.id).disconnect(); } catch {}
+      activeConnections.delete(socket.id);
+      socket.emit("status", "disconnected");
+    }
+  });
 
-            socket.emit("status", "disconnected");
-
-            console.log("🔴 Live desconectado:", socket.id);
-        }
-
-    });
-
-    /* ================================
-       SI CIERRA EL NAVEGADOR
-    ================================ */
-    socket.on("disconnect", () => {
-
-        if (activeConnections.has(socket.id)) {
-
-            try {
-                activeConnections.get(socket.id).disconnect();
-            } catch {}
-
-            activeConnections.delete(socket.id);
-
-            console.log("🔴 Usuario desconectado:", socket.id);
-        }
-
-    });
+  socket.on("disconnect", () => {
+    if (activeConnections.has(socket.id)) {
+      try { activeConnections.get(socket.id).disconnect(); } catch {}
+      activeConnections.delete(socket.id);
+    }
+  });
 
 });
 
-/* ================================
-   🚀 INICIAR SERVIDOR
-================================ */
 const PORT = process.env.PORT || 10000;
-
 server.listen(PORT, () => {
-    console.log("🚀 Nexora activo en puerto", PORT);
+  console.log("🚀 Nexora activo en puerto", PORT);
 });
