@@ -31,7 +31,7 @@ align-items:center;
 background:#141428;
 padding:40px;
 border-radius:20px;
-width:350px;
+width:360px;
 text-align:center;
 }
 
@@ -42,7 +42,7 @@ border:none;
 border-radius:8px;
 background:#1a1a35;
 color:white;
-margin-bottom:15px;
+margin-bottom:12px;
 }
 
 button{
@@ -89,6 +89,17 @@ padding:10px;
 border-radius:8px;
 margin-bottom:10px;
 border-left:4px solid #00ff9d;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:10px;
+}
+
+.action-buttons button{
+width:auto;
+padding:5px 10px;
+font-size:12px;
+margin-left:5px;
 }
 
 #overlayContainer{
@@ -107,6 +118,7 @@ z-index:9999;
 </head>
 <body>
 
+<!-- ACCESS -->
 <div id="accessScreen" class="screen">
 <div class="card">
 <img src="/Logotipo.png" class="logo">
@@ -116,6 +128,7 @@ z-index:9999;
 </div>
 </div>
 
+<!-- LOGIN -->
 <div id="loginScreen" class="screen" style="display:none;">
 <div class="card">
 <img src="/Logotipo.png" class="logo">
@@ -125,24 +138,30 @@ z-index:9999;
 </div>
 </div>
 
+<!-- DASHBOARD -->
 <div id="dashboard">
 
 <div class="sidebar">
 <button class="menu-btn" onclick="showSection('chat')">💬 Chat</button>
 <button class="menu-btn" onclick="showSection('gifts')">🎁 Regalos</button>
 <button class="menu-btn" onclick="showSection('actions')">⚡ Acciones</button>
+<button class="menu-btn" onclick="toggleTTS()">🔊 TTS ON/OFF</button>
 <button class="menu-btn" onclick="disconnectLive()">⛔ Desconectar</button>
 </div>
 
 <div class="main">
+
 <h3>🟢 Conectado a <span id="liveUser"></span></h3>
 
 <div id="chat" class="section active"></div>
 <div id="gifts" class="section"></div>
 
 <div id="actions" class="section">
+
 <h3>Crear Acción</h3>
+
 <input id="actionGift" placeholder="Nombre del regalo (ej: Rose)">
+<input id="actionAmount" type="number" value="1" placeholder="Cantidad mínima">
 <select id="actionType">
 <option value="sound">Sonido</option>
 <option value="video">Video</option>
@@ -150,7 +169,11 @@ z-index:9999;
 </select>
 <input id="actionFile" placeholder="Ruta archivo (ej: /media/rosa.mp4)">
 <button onclick="createAction()">Crear Acción</button>
+
+<br><br>
+<h3>Acciones Configuradas</h3>
 <div id="actionList"></div>
+
 </div>
 
 </div>
@@ -161,6 +184,7 @@ z-index:9999;
 <script>
 const socket = io();
 let actions = [];
+let ttsEnabled = true;
 
 /* LOGIN */
 
@@ -201,48 +225,102 @@ document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 }
 
+/* TTS */
+
+function speak(text){
+if(!ttsEnabled) return;
+const speech = new SpeechSynthesisUtterance(text);
+speech.lang="es-MX";
+window.speechSynthesis.speak(speech);
+}
+
+function toggleTTS(){
+ttsEnabled = !ttsEnabled;
+}
+
 /* EVENTOS */
 
 socket.on("chat",(data)=>{
 const div=document.createElement("div");
 div.className="card-event";
-div.innerHTML=`💬 <strong>${data.user}</strong>: ${data.message}`;
+div.innerHTML=`💬 <span><strong>${data.user}</strong>: ${data.message}</span>`;
 document.getElementById("chat").prepend(div);
+speak(`${data.user} dice ${data.message}`);
 });
 
 socket.on("gift",(data)=>{
 const div=document.createElement("div");
 div.className="card-event";
-div.innerHTML=`🎁 <strong>${data.user}</strong> envió ${data.gift} x${data.amount}`;
+div.innerHTML=`🎁 <span><strong>${data.user}</strong> envió ${data.gift} x${data.amount}</span>`;
 document.getElementById("gifts").prepend(div);
 
-executeAction(data.gift);
+executeAction(data.gift, data.amount);
 });
 
 /* ACCIONES */
 
 function createAction(){
-const gift=document.getElementById("actionGift").value;
-const type=document.getElementById("actionType").value;
-const file=document.getElementById("actionFile").value;
 
-actions.push({gift,type,file});
+const gift=document.getElementById("actionGift").value.trim();
+const minAmount=parseInt(document.getElementById("actionAmount").value);
+const type=document.getElementById("actionType").value;
+const file=document.getElementById("actionFile").value.trim();
+
+if(!gift || !file) return;
+
+actions.push({
+id:Date.now(),
+gift,
+minAmount,
+type,
+file,
+enabled:true
+});
+
 renderActions();
 }
 
 function renderActions(){
+
 const container=document.getElementById("actionList");
 container.innerHTML="";
+
 actions.forEach(a=>{
+
 const div=document.createElement("div");
 div.className="card-event";
-div.innerHTML=`🎁 ${a.gift} → ${a.type}`;
+
+div.innerHTML=`
+<span>🎁 ${a.gift} (x${a.minAmount}) → ${a.type}</span>
+<div class="action-buttons">
+<button onclick="toggleAction(${a.id})">${a.enabled ? "ON" : "OFF"}</button>
+<button onclick="deleteAction(${a.id})">❌</button>
+</div>
+`;
+
 container.appendChild(div);
 });
 }
 
-function executeAction(giftName){
-const action=actions.find(a=>a.gift.toLowerCase()===giftName.toLowerCase());
+function toggleAction(id){
+const action=actions.find(a=>a.id===id);
+action.enabled=!action.enabled;
+renderActions();
+}
+
+function deleteAction(id){
+actions=actions.filter(a=>a.id!==id);
+renderActions();
+}
+
+function executeAction(giftName, amount){
+
+const action=actions.find(a=>
+a.enabled &&
+a.gift.toLowerCase()===giftName.toLowerCase() &&
+amount>=a.minAmount
+);
+
 if(!action) return;
 
 const overlay=document.getElementById("overlayContainer");
@@ -259,7 +337,7 @@ setTimeout(()=>overlay.innerHTML="",5000);
 }
 
 if(action.type==="animation"){
-overlay.innerHTML=`<div style="font-size:60px;">✨ ${giftName} ✨</div>`;
+overlay.innerHTML=`<div style="font-size:60px;">✨ ${giftName} x${amount} ✨</div>`;
 setTimeout(()=>overlay.innerHTML="",3000);
 }
 }
