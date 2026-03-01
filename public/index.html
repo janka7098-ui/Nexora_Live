@@ -2,17 +2,30 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Nexora Live Control</title>
+<title>Nexora Control Panel</title>
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
 
 body{
-    background:linear-gradient(135deg,#0b0b1a,#050510);
+    background:radial-gradient(circle at top,#111132,#050510);
     color:white;
     height:100vh;
     overflow:hidden;
+}
+
+/* LOGO */
+.logo{
+    width:160px;
+    margin-bottom:25px;
+    filter: drop-shadow(0 0 20px rgba(0,255,157,0.7));
+    animation: glow 3s infinite alternate;
+}
+
+@keyframes glow{
+    from{filter: drop-shadow(0 0 10px rgba(123,47,247,0.6));}
+    to{filter: drop-shadow(0 0 25px rgba(0,255,157,0.9));}
 }
 
 /* LOGIN */
@@ -24,36 +37,33 @@ body{
     align-items:center;
 }
 
-.card{
-    background:#12122b;
-    padding:40px;
-    border-radius:20px;
-    width:350px;
+.login-card{
+    background:rgba(20,20,40,0.9);
+    padding:45px;
+    border-radius:25px;
+    width:380px;
     text-align:center;
-    box-shadow:0 0 40px rgba(0,255,157,0.3);
+    box-shadow:0 0 60px rgba(0,255,157,0.4);
+    backdrop-filter:blur(15px);
 }
 
 input{
     width:100%;
-    padding:12px;
+    padding:14px;
     border:none;
-    border-radius:8px;
-    margin:15px 0;
-    background:#1d1d3f;
+    border-radius:10px;
+    background:#1a1a35;
     color:white;
+    margin-bottom:20px;
 }
 
 button{
-    padding:10px 15px;
+    padding:12px 18px;
     border:none;
-    border-radius:8px;
+    border-radius:10px;
     cursor:pointer;
-    background:linear-gradient(90deg,#7b2ff7,#00ff9d);
-    color:white;
     font-weight:bold;
 }
-
-.status{margin-top:10px;}
 
 /* DASHBOARD */
 
@@ -63,54 +73,119 @@ button{
     display:flex;
 }
 
+/* SIDEBAR */
+
 .sidebar{
-    width:220px;
-    background:#0e0e20;
-    padding:20px;
+    width:240px;
+    background:#0e0e1c;
+    padding:25px;
+    border-right:1px solid rgba(255,255,255,0.05);
+    text-align:center;
 }
 
-.sidebar button{
+.menu-btn{
     width:100%;
-    margin-bottom:10px;
-    background:#1c1c3a;
+    padding:12px;
+    margin-bottom:12px;
+    border-radius:10px;
+    background:#141428;
+    color:white;
+    transition:0.3s;
 }
 
-.sidebar button:hover{
+.menu-btn:hover{
     background:linear-gradient(90deg,#7b2ff7,#00ff9d);
+    transform:translateX(5px);
 }
+
+/* MAIN */
 
 .main{
     flex:1;
-    padding:20px;
+    padding:30px;
 }
 
+/* TOPBAR */
+
 .topbar{
-    background:#151535;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:20px;
+    background:#111124;
+    padding:18px;
+    border-radius:15px;
+    margin-bottom:25px;
     display:flex;
     justify-content:space-between;
     align-items:center;
+    box-shadow:0 0 25px rgba(0,255,157,0.2);
 }
+
+/* SECTIONS */
 
 .section{
     display:none;
-    height:75vh;
+    height:70vh;
     overflow-y:auto;
-    background:#151535;
-    padding:15px;
-    border-radius:10px;
+    background:#111124;
+    padding:20px;
+    border-radius:15px;
 }
 
-.active{display:block;}
+.section.active{display:block;}
 
-.item{
-    background:#1d1d40;
-    padding:10px;
-    border-radius:8px;
-    margin-bottom:8px;
+.card{
+    background:#1a1a35;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:10px;
     border-left:4px solid #00ff9d;
+    animation:fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn{
+    from{opacity:0;transform:translateY(5px);}
+    to{opacity:1;transform:translateY(0);}
+}
+
+/* SWITCH */
+
+.switch{
+    position:relative;
+    display:inline-block;
+    width:50px;
+    height:25px;
+}
+
+.switch input{display:none;}
+
+.slider{
+    position:absolute;
+    cursor:pointer;
+    top:0;left:0;right:0;bottom:0;
+    background:#333;
+    border-radius:25px;
+    transition:0.3s;
+}
+
+.slider:before{
+    content:"";
+    position:absolute;
+    height:19px;width:19px;
+    left:3px;bottom:3px;
+    background:white;
+    border-radius:50%;
+    transition:0.3s;
+}
+
+input:checked + .slider{
+    background:linear-gradient(90deg,#7b2ff7,#00ff9d);
+}
+
+input:checked + .slider:before{
+    transform:translateX(25px);
+}
+
+.disconnect{
+    background:#ff3b3b;
+    color:white;
 }
 </style>
 </head>
@@ -118,26 +193,34 @@ button{
 
 <!-- LOGIN -->
 <div id="login">
-    <div class="card">
-        <h2>Nexora Live</h2>
+    <div class="login-card">
+        <img src="/Logotipo.png" class="logo">
         <input id="username" placeholder="Usuario sin @" />
-        <button onclick="connectLive()">Conectar</button>
-        <div class="status" id="status">Desconectado</div>
+        <button onclick="connectLive()" style="background:linear-gradient(90deg,#7b2ff7,#00ff9d);color:white;">Conectar</button>
+        <div id="status">Desconectado</div>
     </div>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard">
+
     <div class="sidebar">
-        <button onclick="showSection('chat')">Chat</button>
-        <button onclick="showSection('gifts')">Regalos</button>
-        <button onclick="toggleTTS()" id="ttsBtn">🔊 TTS ON</button>
-        <button onclick="disconnectLive()" style="background:#ff3b3b;">Desconectar</button>
+        <img src="/Logotipo.png" class="logo">
+        <button class="menu-btn" onclick="showSection('chat')">💬 Chat</button>
+        <button class="menu-btn" onclick="showSection('gifts')">🎁 Regalos</button>
+        <button class="menu-btn disconnect" onclick="disconnectLive()">⛔ Desconectar</button>
     </div>
 
     <div class="main">
         <div class="topbar">
             <div>🟢 Conectado a <span id="liveUser"></span></div>
+            <div>
+                🔊 TTS
+                <label class="switch">
+                    <input type="checkbox" id="ttsToggle" checked onchange="toggleTTS()">
+                    <span class="slider"></span>
+                </label>
+            </div>
         </div>
 
         <div id="chat" class="section active"></div>
@@ -149,70 +232,54 @@ button{
 const socket = io();
 let ttsEnabled = true;
 
-/* VOZ */
 function speak(text){
     if(!ttsEnabled) return;
-    const speech = new SpeechSynthesisUtterance(text);
+    const speech=new SpeechSynthesisUtterance(text);
     speech.lang="es-MX";
     speech.rate=1;
     window.speechSynthesis.speak(speech);
 }
 
-/* CONECTAR */
 function connectLive(){
     const username=document.getElementById("username").value;
     socket.emit("startConnection",{username});
 }
 
-/* DESCONECTAR */
 function disconnectLive(){
     socket.emit("disconnectLive");
     location.reload();
 }
 
-/* CAMBIAR SECCION */
 function showSection(id){
-    document.querySelectorAll(".section").forEach(sec=>sec.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
     document.getElementById(id).classList.add("active");
 }
 
-/* TOGGLE TTS */
 function toggleTTS(){
-    ttsEnabled=!ttsEnabled;
-    const btn=document.getElementById("ttsBtn");
-    btn.innerText=ttsEnabled?"🔊 TTS ON":"🔇 TTS OFF";
+    ttsEnabled=document.getElementById("ttsToggle").checked;
 }
 
-/* STATUS */
 socket.on("status",(msg)=>{
     if(msg==="connected"){
         document.getElementById("login").style.display="none";
         document.getElementById("dashboard").style.display="flex";
         document.getElementById("liveUser").innerText=document.getElementById("username").value;
     }
-
-    if(msg==="error"){
-        document.getElementById("status").innerText="Error al conectar";
-    }
 });
 
-/* CHAT */
 socket.on("chat",(data)=>{
     const div=document.createElement("div");
-    div.className="item";
+    div.className="card";
     div.innerHTML=`💬 <strong>${data.user}</strong>: ${data.message}`;
     document.getElementById("chat").prepend(div);
-
     speak(`${data.user} dice ${data.message}`);
 });
 
-/* GIFTS */
 socket.on("gift",(data)=>{
     const div=document.createElement("div");
-    div.className="item";
+    div.className="card";
     div.innerHTML=`🎁 <strong>${data.user}</strong> envió ${data.gift} x${data.amount}`;
     document.getElementById("gifts").prepend(div);
-
     speak(`${data.user} envió ${data.gift}`);
 });
 </script>
