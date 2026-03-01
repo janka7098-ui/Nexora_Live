@@ -65,17 +65,6 @@ padding:0 20px;
 border-bottom:1px solid #222;
 }
 
-.tts-btn{
-background:#1a1a35;
-padding:8px 14px;
-border-radius:8px;
-cursor:pointer;
-}
-
-.tts-btn.active{
-background:linear-gradient(90deg,#7b2ff7,#00ff9d);
-}
-
 .container{
 flex:1;
 display:flex;
@@ -123,6 +112,55 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 }
+
+/* TTS SWITCH */
+.tts-container{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.tts-switch{
+width:60px;
+height:30px;
+background:#3a3a3a;
+border-radius:50px;
+position:relative;
+cursor:pointer;
+transition:0.3s;
+}
+
+.tts-switch.active{
+background:linear-gradient(90deg,#7b2ff7,#00ff9d);
+box-shadow:0 0 10px #00ff9d;
+}
+
+.tts-circle{
+width:24px;
+height:24px;
+background:white;
+border-radius:50%;
+position:absolute;
+top:3px;
+left:3px;
+transition:0.3s;
+}
+
+.tts-switch.active .tts-circle{
+left:33px;
+}
+
+.tts-status{
+font-weight:bold;
+}
+
+.tts-status.on{
+color:#00ff9d;
+}
+
+.tts-status.off{
+color:#ff4d4d;
+}
 </style>
 </head>
 <body>
@@ -144,9 +182,17 @@ align-items:center;
 🟢 Conectado a <strong id="liveUser"></strong>
 </div>
 
-<div>
-<span id="ttsToggle" class="tts-btn active" onclick="toggleTTS()">🔊 TTS ACTIVADO</span>
-<button onclick="disconnectLive()">Desconectar</button>
+<div style="display:flex; align-items:center; gap:20px;">
+<div class="tts-container">
+  <div id="ttsToggle" class="tts-switch active" onclick="toggleTTS()">
+    <div class="tts-circle"></div>
+  </div>
+  <span id="ttsText" class="tts-status on">ACTIVADO</span>
+</div>
+
+<button onclick="disconnectLive()" style="width:auto;padding:8px 16px;">
+Desconectar
+</button>
 </div>
 </div>
 
@@ -224,17 +270,23 @@ location.reload();
 }
 });
 
-/* CHAT + TTS */
+/* TTS */
 function toggleTTS(){
 ttsEnabled=!ttsEnabled;
-const btn=document.getElementById("ttsToggle");
+
+const toggle=document.getElementById("ttsToggle");
+const text=document.getElementById("ttsText");
 
 if(ttsEnabled){
-btn.classList.add("active");
-btn.innerText="🔊 TTS ACTIVADO";
+toggle.classList.add("active");
+text.innerText="ACTIVADO";
+text.classList.remove("off");
+text.classList.add("on");
 }else{
-btn.classList.remove("active");
-btn.innerText="🔇 TTS DESACTIVADO";
+toggle.classList.remove("active");
+text.innerText="DESACTIVADO";
+text.classList.remove("on");
+text.classList.add("off");
 }
 }
 
@@ -245,6 +297,7 @@ speech.lang="es-MX";
 window.speechSynthesis.speak(speech);
 }
 
+/* CHAT */
 socket.on("chat",(data)=>{
 const div=document.createElement("div");
 div.className="card-event";
@@ -271,7 +324,6 @@ const file=document.getElementById("actionFile").value.trim();
 if(!gift || !file) return;
 
 actions.push({ gift, file });
-
 renderActions();
 }
 
@@ -284,7 +336,7 @@ const div=document.createElement("div");
 div.className="action-card";
 div.innerHTML=`
 <span>🎁 ${a.gift}</span>
-<button onclick="deleteAction(${index})">❌</button>
+<button onclick="deleteAction(${index})" style="width:auto;padding:4px 8px;">❌</button>
 `;
 container.appendChild(div);
 });
