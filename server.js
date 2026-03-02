@@ -13,7 +13,33 @@ const io = socketIo(server);
 app.use(express.static("public"));
 
 /* =========================
-   PROXY AVATAR (SOLUCIÓN CORS)
+   LISTA DE REGALOS
+========================= */
+
+app.get("/gift-list", (req, res) => {
+
+  const giftsPath = path.join(__dirname, "public", "regalos");
+
+  fs.readdir(giftsPath, (err, files) => {
+    if (err) {
+      console.log("Error leyendo carpeta regalos:", err);
+      return res.json([]);
+    }
+
+    const giftList = files
+      .filter(file => file.toLowerCase().endsWith(".png"))
+      .map(file => ({
+        name: file.replace(".png", ""),
+        image: "/regalos/" + file
+      }));
+
+    res.json(giftList);
+  });
+
+});
+
+/* =========================
+   PROXY AVATAR
 ========================= */
 
 app.get("/avatar-proxy", async (req, res) => {
@@ -37,11 +63,8 @@ const allowedKeys = [
 ];
 
 const activeConnections = new Map();
-const userActions = new Map();
 
 io.on("connection", (socket) => {
-
-  /* ===== INICIAR CONEXIÓN ===== */
 
   socket.on("startConnection", async ({ username, key }) => {
 
@@ -66,8 +89,6 @@ io.on("connection", (socket) => {
 
       socket.emit("status", "connected");
 
-      /* ===== OBTENER AVATAR ===== */
-
       try {
         const roomInfo = await tiktok.getRoomInfo();
         const avatarUrl = roomInfo?.owner?.avatarLarger;
@@ -83,8 +104,6 @@ io.on("connection", (socket) => {
         console.log("Error avatar:", err);
       }
 
-      /* ===== REGALOS ===== */
-
       tiktok.on("gift", (data) => {
         if (data.repeatEnd) {
           socket.emit("gift", {
@@ -94,8 +113,6 @@ io.on("connection", (socket) => {
           });
         }
       });
-
-      /* ===== CHAT ===== */
 
       tiktok.on("chat", (data) => {
         socket.emit("chat", {
