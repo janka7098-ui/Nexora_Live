@@ -37,6 +37,15 @@
             box-shadow: 0 0 30px rgba(57, 255, 20, 0.1);
         }
 
+        /* Estilo mejorado del Select (Imagen 2) */
+        .gift-selector {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238A2BE2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+        }
+
         #loader {
             position: fixed;
             inset: 0;
@@ -57,7 +66,6 @@
             animation: spin 1s linear infinite;
         }
 
-        /* Estilo para los botones de modo */
         .mode-btn {
             background: rgba(255,255,255,0.05);
             color: #666;
@@ -121,7 +129,9 @@
                 </div>
 
                 <div class="space-y-4">
-                    <select id="gift-select" class="w-full bg-black/40 border border-zinc-800 p-3 rounded-lg text-sm outline-none focus:border-green-400"></select>
+                    <select id="gift-select" class="gift-selector w-full bg-black/60 border border-zinc-700 p-4 rounded-xl text-sm outline-none focus:border-purple-500 text-zinc-300 font-bold">
+                        <option value="" disabled selected>Seleccionar Regalo...</option>
+                    </select>
                     
                     <div id="container-mp3">
                         <input type="file" id="file-input" accept="audio/mpeg" class="hidden">
@@ -135,7 +145,7 @@
                         <input id="link-input" type="text" placeholder="http://localhost:8080/comando" class="w-full bg-black/60 border border-zinc-800 p-4 rounded-lg text-xs text-green-400 outline-none focus:border-green-500 font-mono">
                     </div>
 
-                    <button id="btn-save-action" class="w-full bg-white text-black font-bold py-3 rounded-lg text-xs uppercase hover:bg-green-500 transition-colors">Guardar y Vincular</button>
+                    <button id="btn-save-action" class="w-full bg-white text-black font-black py-4 rounded-xl text-xs uppercase hover:bg-green-500 transition-all shadow-lg">Guardar y Vincular</button>
                 </div>
             </section>
 
@@ -149,7 +159,10 @@
             <div class="glass flex flex-col overflow-hidden">
                 <div class="p-4 border-b border-zinc-900 flex justify-between items-center bg-black/20">
                     <span class="text-xs font-bold tracking-widest italic"><i data-lucide="message-square" class="inline w-3 mr-1 text-purple-500"></i> CHAT</span>
-                    <input type="checkbox" id="tts-enabled" checked class="accent-green-500 h-4 w-4 cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] text-zinc-500 uppercase">TTS</span>
+                        <input type="checkbox" id="tts-enabled" checked class="accent-green-500 h-4 w-4 cursor-pointer">
+                    </div>
                 </div>
                 <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
             </div>
@@ -165,20 +178,26 @@
         <div class="col-span-12 lg:col-span-3 space-y-8">
             <section class="glass p-6">
                 <h2 class="text-xs font-bold uppercase mb-4 text-zinc-500 italic">Controles Maestro</h2>
-                <div class="space-y-4">
+                <div class="space-y-6">
                     <div>
-                        <label class="text-[10px] text-zinc-500 block mb-1 uppercase">Volumen General</label>
+                        <div class="flex justify-between mb-1">
+                            <label class="text-[10px] text-zinc-500 uppercase">Volumen Voces</label>
+                            <span id="vol-perc" class="text-[10px] text-purple-500 font-bold">70%</span>
+                        </div>
                         <input id="tts-volume" type="range" min="0" max="1" step="0.1" value="0.7" class="w-full accent-purple-600 cursor-pointer">
                     </div>
-                    <select id="tts-voice" class="w-full bg-black/40 border border-zinc-800 p-2 rounded text-[11px] outline-none"></select>
+                    <div>
+                        <label class="text-[10px] text-zinc-500 block mb-2 uppercase">Voz de Narración</label>
+                        <select id="tts-voice" class="gift-selector w-full bg-black/40 border border-zinc-800 p-3 rounded-lg text-[11px] text-white outline-none focus:border-purple-500"></select>
+                    </div>
                 </div>
             </section>
 
             <section class="glass flex flex-col h-[435px]">
-                <div class="p-4 border-b border-zinc-900 bg-black/20">
+                <div class="p-4 border-b border-zinc-900 bg-black/20 text-center">
                     <h2 class="text-xs font-bold uppercase tracking-widest italic">Historial Sesión</h2>
                 </div>
-                <div id="gift-history" class="flex-1 overflow-y-auto p-3 space-y-2 text-[11px]"></div>
+                <div id="gift-history" class="flex-1 overflow-y-auto p-3 space-y-2 text-[11px] font-mono text-zinc-600"></div>
             </section>
         </div>
     </main>
@@ -186,9 +205,35 @@
     <script>
         const socket = io();
         lucide.createIcons();
+        const synth = window.speechSynthesis;
+        let voices = [];
 
-        let currentMode = 'mp3'; // Estado inicial
+        // CARGAR VOCES TTS
+        function loadVoices() {
+            voices = synth.getVoices();
+            const voiceSelect = document.getElementById('tts-voice');
+            voiceSelect.innerHTML = voices
+                .map((v, i) => `<option value="${i}" ${v.lang.includes('es') ? 'selected' : ''}>${v.name} (${v.lang})</option>`)
+                .join('');
+        }
+        speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices();
 
+        function speak(text) {
+            if (!document.getElementById('tts-enabled').checked) return;
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.voice = voices[document.getElementById('tts-voice').value];
+            utter.volume = document.getElementById('tts-volume').value;
+            synth.speak(utter);
+        }
+
+        // Volumen UI
+        document.getElementById('tts-volume').oninput = (e) => {
+            document.getElementById('vol-perc').innerText = Math.round(e.target.value * 100) + "%";
+        };
+
+        // --- LÓGICA DE MODOS ---
+        let currentMode = 'mp3';
         function setMode(mode) {
             currentMode = mode;
             const btnMp3 = document.getElementById('mode-mp3');
@@ -215,59 +260,30 @@
         const statusText = document.getElementById('connection-status');
         const statusPulse = document.getElementById('status-pulse');
 
-        // Lógica de Guardado Adaptada (NUEVA)
+        // BOTÓN GUARDAR
         document.getElementById('btn-save-action').onclick = () => {
             const username = document.getElementById('username').value;
             const gift = document.getElementById('gift-select').value;
-            
-            if(!username) return alert("Ingresa tu usuario primero");
+            if(!username || !gift) return alert("Faltan datos (Usuario o Regalo)");
 
             if(currentMode === 'mp3') {
                 const fileInput = document.getElementById('file-input');
                 const file = fileInput.files[0];
-                if(!file) return alert("Selecciona un archivo MP3");
-
+                if(!file) return alert("Selecciona un MP3");
                 loader.style.display = 'flex';
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    socket.emit("uploadAndSave", {
-                        username, gift, fileName: file.name, fileData: e.target.result
-                    });
+                    socket.emit("uploadAndSave", { username, gift, fileName: file.name, fileData: e.target.result });
                     fileInput.value = "";
                     document.getElementById('file-name').innerText = "Seleccionar MP3...";
                 };
                 reader.readAsDataURL(file);
             } else {
                 const link = document.getElementById('link-input').value;
-                if(!link) return alert("Ingresa el Link del Webhook");
-                
-                socket.emit("saveAction", {
-                    username,
-                    action: { gift, file: link, type: 'link' }
-                });
+                if(!link) return alert("Ingresa el Link");
+                socket.emit("saveAction", { username, action: { gift, file: link, type: 'link' } });
                 document.getElementById('link-input').value = "";
             }
-        };
-
-        // --- Resto de funciones se mantienen iguales ---
-        function playBootSound() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'square';
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1);
-            osc.frequency.setValueAtTime(100, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.6);
-            osc.start();
-            osc.stop(ctx.currentTime + 1);
-        }
-
-        document.getElementById('file-input').onchange = (e) => {
-            document.getElementById('file-name').innerText = e.target.files[0]?.name || "Seleccionar MP3...";
         };
 
         btnConnect.onclick = () => {
@@ -281,12 +297,12 @@
         socket.on("status", (status) => {
             loader.style.display = 'none';
             if (status === "connected") {
-                playBootSound();
                 statusText.innerText = "CONECTADO";
                 statusText.className = "text-[11px] uppercase tracking-[4px] text-green-500 font-bold italic";
                 statusPulse.className = "w-2.5 h-2.5 rounded-full bg-green-500 animate-ping";
                 btnConnect.classList.add('hidden');
                 btnDisconnect.classList.remove('hidden');
+                speak("Sistema Nexora Ultra activado.");
                 socket.emit("getActions", document.getElementById('username').value);
             }
         });
@@ -301,29 +317,33 @@
                 </div>
                 <span class="text-2xl font-black text-green-400">x${data.amount}</span>`;
             document.getElementById('gift-container').prepend(alertDiv);
+            
+            // TTS de regalo
+            speak(`¡Gracias ${data.user} por enviar ${data.amount} ${data.gift}!`);
+
+            const hist = document.createElement('div');
+            hist.innerText = `[${new Date().toLocaleTimeString()}] ${data.user} envió ${data.gift}`;
+            document.getElementById('gift-history').prepend(hist);
+        });
+
+        socket.on("chat", (data) => {
+            const div = document.createElement('div');
+            div.className = "bg-zinc-900/50 p-3 rounded-lg border-l-2 border-purple-500 animate-fade-in";
+            div.innerHTML = `<span class="text-purple-400 font-bold text-xs uppercase">${data.user}:</span> <p class="text-sm text-zinc-300">${data.message}</p>`;
+            document.getElementById('chat-container').prepend(div);
+            speak(`${data.user} dice: ${data.message}`);
         });
 
         socket.on("actionsUpdated", (actions) => {
             document.getElementById('actions-list').innerHTML = actions.map((a, i) => `
                 <div class="flex justify-between items-center bg-black/40 p-3 rounded-lg border border-zinc-800">
-                    <div class="text-xs">
-                        <b class="${a.type === 'link' ? 'text-green-400' : 'text-purple-400'}">${a.type === 'link' ? '[WEBHOOK]' : '[AUDIO]'}</b><br>
+                    <div class="text-[10px]">
+                        <b class="${a.type === 'link' ? 'text-green-400' : 'text-purple-400'} uppercase">${a.type}</b><br>
                         <b class="text-white">${a.gift}</b>
                     </div>
-                    <button onclick="deleteAction(${i})" class="text-red-500"><i data-lucide="trash-2" class="w-4"></i></button>
+                    <button onclick="deleteAction(${i})" class="text-red-500 hover:text-white transition-colors"><i data-lucide="trash-2" class="w-4"></i></button>
                 </div>`).join('');
             lucide.createIcons();
-        });
-
-        function deleteAction(index) {
-            socket.emit("deleteAction", { username: document.getElementById('username').value, index });
-        }
-
-        socket.on("chat", (data) => {
-            const div = document.createElement('div');
-            div.className = "bg-zinc-900/50 p-3 rounded-lg border-l-2 border-purple-500";
-            div.innerHTML = `<span class="text-purple-400 font-bold text-xs">${data.user}:</span> <p class="text-sm text-zinc-300">${data.message}</p>`;
-            document.getElementById('chat-container').prepend(div);
         });
 
         socket.on("triggerSound", (fileUrl) => {
@@ -332,9 +352,17 @@
             audio.play();
         });
 
+        function deleteAction(index) {
+            socket.emit("deleteAction", { username: document.getElementById('username').value, index });
+        }
+
         fetch('/gift-list').then(r => r.json()).then(d => {
-            document.getElementById('gift-select').innerHTML = d.map(g => `<option value="${g.name}">${g.name}</option>`).join('');
+            document.getElementById('gift-select').innerHTML += d.map(g => `<option value="${g.name}">${g.name.toUpperCase()}</option>`).join('');
         });
+
+        document.getElementById('file-input').onchange = (e) => {
+            document.getElementById('file-name').innerText = e.target.files[0]?.name || "Seleccionar MP3...";
+        };
     </script>
 </body>
 </html>
