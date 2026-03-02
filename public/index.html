@@ -76,8 +76,6 @@ width:100%;
 height:100vh;
 }
 
-/* TOPBAR */
-
 .topbar{
 height:65px;
 background:#0e0e1f;
@@ -88,14 +86,10 @@ padding:0 25px;
 border-bottom:1px solid #1f1f3d;
 }
 
-/* LAYOUT */
-
 .container{
 flex:1;
 display:flex;
 }
-
-/* SIDEBAR */
 
 .sidebar{
 width:230px;
@@ -122,20 +116,14 @@ border-color:#7b2ff7;
 box-shadow:0 0 10px rgba(123,47,247,0.3);
 }
 
-/* MAIN */
-
 .main{
 flex:1;
 padding:25px;
 overflow:auto;
 }
 
-/* SECTIONS */
-
 .section{display:none;}
 .section.active{display:block;}
-
-/* EVENT CARDS */
 
 .card-event{
 background:#161633;
@@ -145,8 +133,6 @@ margin-bottom:12px;
 border-left:4px solid #00ff9d;
 box-shadow:0 0 10px rgba(0,255,157,0.1);
 }
-
-/* ACTION CARDS */
 
 .action-card{
 background:#161633;
@@ -213,7 +199,6 @@ color:#ff4d4d;
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
 <h2>NEXORA ACCESS</h2>
 <input id="accessKey" placeholder="Clave de acceso">
@@ -222,7 +207,6 @@ color:#ff4d4d;
 <p id="loginMsg"></p>
 </div>
 
-<!-- DASHBOARD -->
 <div id="dashboard">
 
 <div class="topbar">
@@ -237,6 +221,10 @@ color:#ff4d4d;
   </div>
   <span id="ttsText" class="tts-status on">ACTIVADO</span>
 </div>
+
+<select id="voiceSelector" style="padding:6px;background:#161633;color:white;border:1px solid #222;border-radius:8px;">
+<option>Cargando voces...</option>
+</select>
 
 <button onclick="disconnectLive()" style="width:auto;padding:8px 16px;">
 Desconectar
@@ -279,8 +267,10 @@ const socket = io();
 let tempUsername = "";
 let ttsEnabled = true;
 let actions = [];
+let selectedVoice = null;
 
 /* LOGIN */
+
 function validateAndConnect(){
 const key=document.getElementById("accessKey").value.trim();
 const username=document.getElementById("tiktokUser").value.trim();
@@ -318,10 +308,39 @@ location.reload();
 }
 });
 
+/* VOICE SELECTOR */
+
+function loadVoices(){
+const voices = speechSynthesis.getVoices();
+const selector = document.getElementById("voiceSelector");
+selector.innerHTML = "";
+
+voices.forEach((voice,index)=>{
+const option = document.createElement("option");
+option.value = index;
+option.textContent = `${voice.name} (${voice.lang})`;
+selector.appendChild(option);
+});
+
+if(voices.length>0){
+selectedVoice = voices[0];
+}
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+
+document.addEventListener("DOMContentLoaded",()=>{
+loadVoices();
+document.getElementById("voiceSelector").addEventListener("change",function(){
+const voices = speechSynthesis.getVoices();
+selectedVoice = voices[this.value];
+});
+});
+
 /* TTS */
+
 function toggleTTS(){
 ttsEnabled=!ttsEnabled;
-
 const toggle=document.getElementById("ttsToggle");
 const text=document.getElementById("ttsText");
 
@@ -340,12 +359,19 @@ text.classList.add("off");
 
 function speak(text){
 if(!ttsEnabled) return;
+
 const speech=new SpeechSynthesisUtterance(text);
-speech.lang="es-MX";
+if(selectedVoice){ speech.voice = selectedVoice; }
+
+speech.rate = 1;
+speech.pitch = 1;
+speech.volume = 1;
+
 window.speechSynthesis.speak(speech);
 }
 
 /* CHAT */
+
 socket.on("chat",(data)=>{
 const div=document.createElement("div");
 div.className="card-event";
@@ -355,20 +381,20 @@ speak(`${data.user} dice ${data.message}`);
 });
 
 /* REGALOS */
+
 socket.on("gift",(data)=>{
 const div=document.createElement("div");
 div.className="card-event";
 div.innerHTML=`🎁 <strong>${data.user}</strong> envió ${data.gift} x${data.amount}`;
 document.getElementById("gifts").prepend(div);
-
 executeAction(data.gift);
 });
 
 /* ACCIONES */
+
 function createAction(){
 const gift=document.getElementById("actionGift").value.trim();
 const file=document.getElementById("actionFile").value.trim();
-
 if(!gift || !file) return;
 
 actions.push({ gift, file });
@@ -378,7 +404,6 @@ renderActions();
 function renderActions(){
 const container=document.getElementById("actionList");
 container.innerHTML="";
-
 actions.forEach((a,index)=>{
 const div=document.createElement("div");
 div.className="action-card";
@@ -398,9 +423,8 @@ renderActions();
 function executeAction(giftName){
 const action=actions.find(a=>a.gift.toLowerCase()===giftName.toLowerCase());
 if(!action) return;
-
 const audio=new Audio(action.file);
-audio.play().catch(err=>console.log("Error audio:",err));
+audio.play().catch(()=>{});
 }
 
 function showSection(id){
