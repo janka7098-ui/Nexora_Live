@@ -2,6 +2,8 @@ const express = require("express");
 const http = require("http");
 const { WebcastPushConnection } = require("tiktok-live-connector");
 const socketIo = require("socket.io");
+const fs = require("fs");          // 🔥 NUEVO
+const path = require("path");      // 🔥 NUEVO
 
 const app = express();
 const server = http.createServer(app);
@@ -9,17 +11,39 @@ const io = socketIo(server);
 
 app.use(express.static("public"));
 
+/* 🔥 NUEVA RUTA PARA LISTA DE REGALOS */
+app.get("/gift-list", (req, res) => {
+
+  const giftsPath = path.join(__dirname, "public", "regalos");
+
+  fs.readdir(giftsPath, (err, files) => {
+    if (err) {
+      console.log("Error leyendo carpeta regalos:", err);
+      return res.json([]);
+    }
+
+    const giftList = files
+      .filter(file => file.endsWith(".png"))
+      .map(file => ({
+        name: file.replace(".png", ""),
+        diamonds: 0 // luego podemos agregar valores reales
+      }));
+
+    res.json(giftList);
+  });
+
+});
+
 const allowedKeys = [
   "nexora01","nexora02","nexora03","nexora04","nexora05",
   "nexora06","nexora07","nexora08","nexora09","nexora10"
 ];
 
 const activeConnections = new Map();
-const userActions = new Map(); // 🔥 Guardado de acciones por usuario
+const userActions = new Map();
 
 io.on("connection", (socket) => {
 
-  // VALIDAR CLAVE
   socket.on("validateKey", (key) => {
     if (allowedKeys.includes(key)) {
       socket.emit("keyValid");
@@ -28,7 +52,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // CONECTAR A TIKTOK
   socket.on("startConnection", async ({ username }) => {
 
     if (!username) return;
@@ -47,7 +70,6 @@ io.on("connection", (socket) => {
 
       socket.emit("status", "connected");
 
-      // REGALOS (ANTI DUPLICADO)
       tiktok.on("gift", (data) => {
         if (data.repeatEnd) {
           socket.emit("gift", {
@@ -58,7 +80,6 @@ io.on("connection", (socket) => {
         }
       });
 
-      // CHAT
       tiktok.on("chat", (data) => {
         socket.emit("chat", {
           user: data.nickname,
@@ -71,7 +92,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // GUARDAR ACCIÓN
   socket.on("saveAction", ({ username, action }) => {
 
     if (!userActions.has(username)) {
@@ -84,13 +104,11 @@ io.on("connection", (socket) => {
     socket.emit("actionsUpdated", actions);
   });
 
-  // OBTENER ACCIONES
   socket.on("getActions", (username) => {
     const actions = userActions.get(username) || [];
     socket.emit("actionsUpdated", actions);
   });
 
-  // ELIMINAR ACCIÓN
   socket.on("deleteAction", ({ username, index }) => {
 
     if (!userActions.has(username)) return;
@@ -101,7 +119,6 @@ io.on("connection", (socket) => {
     socket.emit("actionsUpdated", actions);
   });
 
-  // DESCONECTAR LIVE
   socket.on("disconnectLive", () => {
     if (activeConnections.has(socket.id)) {
       try { activeConnections.get(socket.id).disconnect(); } catch {}
