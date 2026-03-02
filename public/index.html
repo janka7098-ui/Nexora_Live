@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexora - Panel Profesional</title>
-    <link rel="icon" type="image/png" href="public/Logo.png">
+    <title>StreamTrix - Ultimate Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
-
     <style>
         :root {
             --bg-deep: #0F0A1A;
@@ -19,6 +17,7 @@
             --border-color: rgba(138, 46, 255, 0.2);
         }
 
+        /* --- BASE --- */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Inter', sans-serif;
@@ -29,287 +28,212 @@
             overflow: hidden;
         }
 
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: 260px;
-            background-color: var(--bg-deep);
-            border-right: 1px solid var(--border-color);
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
+        /* --- LOADING OVERLAY --- */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 10, 26, 0.9);
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999; backdrop-filter: blur(5px);
         }
-
-        .logo-box { text-align: center; margin-bottom: 40px; }
-        .logo-box img { width: 120px; filter: drop-shadow(0 0 10px var(--neon-purple)); }
-
-        .menu-btn {
-            width: 100%; padding: 12px 15px; margin-bottom: 10px;
-            background: transparent; border-radius: 8px; color: var(--text-muted);
-            cursor: pointer; transition: 0.3s; border: none;
-            text-align: left; font-weight: 600; font-size: 0.9rem;
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--neon-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .menu-btn:hover, .menu-btn.active {
-            background: linear-gradient(90deg, rgba(138,46,255,0.1) 0%, transparent 100%);
-            color: var(--neon-green);
-            border-left: 4px solid var(--neon-green);
-        }
-
-        /* --- MAIN CONTENT --- */
+        /* --- LAYOUT --- */
+        .sidebar { width: 250px; border-right: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; }
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .live-feed { width: 320px; background-color: var(--bg-card); border-left: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; }
 
-        header {
-            background-color: var(--bg-card);
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-        }
+        /* --- TOPBAR --- */
+        header { background-color: var(--bg-card); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .status-badge { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff4d4d; }
+        .status-dot.active { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
 
-        .status-badge {
-            padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;
-            border: 1px solid #ff4d4d; color: #ff4d4d; transition: 0.4s;
-        }
-        .status-badge.connected { border-color: var(--neon-green); color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
+        /* --- UI ELEMENTS --- */
+        .logo { font-size: 1.5rem; font-weight: 800; margin-bottom: 40px; }
+        .logo span { color: var(--neon-green); }
+        .nav-item { padding: 12px 15px; color: var(--text-muted); text-decoration: none; border-radius: 8px; margin-bottom: 5px; cursor: pointer; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: rgba(138,46,255,0.1); color: var(--neon-green); border-left: 4px solid var(--neon-green); }
+        
+        .card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+        input, select { background: #0F0A1A; border: 1px solid var(--border-color); padding: 10px; border-radius: 6px; color: white; margin-bottom: 10px; width: 100%; }
+        button { background: linear-gradient(90deg, var(--neon-purple), #5a1bcc); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(138, 46, 255, 0.4); }
 
-        /* --- SECCIONES Y CARDS --- */
-        .section { display: none; padding: 40px; }
-        .section.active { display: block; }
+        .feed-item { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid var(--neon-purple); animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
 
-        .card {
-            background-color: var(--bg-card); padding: 25px; border-radius: 12px;
-            border: 1px solid var(--border-color); margin-bottom: 20px;
-        }
-
-        .card-event {
-            background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;
-            margin-bottom: 10px; border-left: 4px solid var(--neon-purple);
-        }
-
-        input, select {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            background: #120b24; border: 1px solid var(--border-color);
-            border-radius: 8px; color: white; outline: none;
-        }
-
-        /* --- BOTÓN CON CARGA --- */
-        .btn-primary {
-            width: 100%; padding: 14px; background: linear-gradient(90deg, var(--neon-purple), #6a1bc2);
-            border: none; border-radius: 10px; color: white; font-weight: 800;
-            cursor: pointer; transition: 0.3s; position: relative;
-        }
-        .btn-primary:hover { transform: translateY(-2px); opacity: 0.9; }
-
-        .btn-primary.loading { color: transparent; pointer-events: none; }
-        .btn-primary.loading::after {
-            content: ""; position: absolute; width: 20px; height: 20px;
-            top: 50%; left: 50%; margin: -10px 0 0 -10px;
-            border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
-            border-radius: 50%; animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* --- PERFIL --- */
-        .profile-frame {
-            width: 42px; height: 42px; border-radius: 50%;
-            border: 2px solid var(--neon-green); display: none; overflow: hidden;
-        }
-        .profile-frame img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* --- TTS SWITCH --- */
-        .tts-switch {
-            width: 50px; height: 26px; background: #333;
-            border-radius: 50px; position: relative; cursor: pointer;
-        }
-        .tts-switch.active { background: var(--neon-green); }
-        .tts-circle {
-            width: 20px; height: 20px; background: white; border-radius: 50%;
-            position: absolute; top: 3px; left: 3px; transition: 0.3s;
-        }
-        .tts-switch.active .tts-circle { left: 27px; }
+        /* Switch Styling */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--neon-green); }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body>
 
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; color: var(--neon-green);">Vinculando con TikTok...</p>
+    </div>
+
     <aside class="sidebar">
-        <div class="logo-box"><img src="public/Logo.png" alt="Nexora"></div>
-        <button class="menu-btn active" onclick="showSection('conexion', this)">🔌 Conexión</button>
-        <button class="menu-btn" onclick="showSection('chat', this)">💬 Chat</button>
-        <button class="menu-btn" onclick="showSection('gifts', this)">🎁 Regalos</button>
-        <button class="menu-btn" onclick="showSection('actions', this)">⚡ Acciones</button>
+        <div class="logo">Stream<span>Trix</span></div>
+        <div class="nav-item active" onclick="showSection('dashboard')">Panel Principal</div>
+        <div class="nav-item" onclick="showSection('actions-config')">Configurar Eventos</div>
+        <div class="nav-item">Historial</div>
+        <div style="margin-top: auto;">
+            <button onclick="disconnectLive()" style="width:100%; background: #ff4d4d;">Desconectar</button>
+        </div>
     </aside>
 
     <div class="main-content">
         <header>
-            <div id="statusBadge" class="status-badge">● DESCONECTADO</div>
-            
-            <div style="display:flex; align-items:center; gap:15px;">
-                <div id="ttsToggle" class="tts-switch active" onclick="toggleTTS()">
-                    <div class="tts-circle"></div>
+            <div class="status-badge">
+                <span id="statusDot" class="status-dot"></span>
+                <span id="statusText">DESCONECTADO</span>
+                <span id="connectedUser" style="color:var(--neon-green); margin-left:10px;"></span>
+            </div>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <select id="voiceSelector" style="margin:0; width: 180px; font-size: 0.8rem;"></select>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:0.8rem; color:var(--text-muted);">TTS</span>
+                    <label class="switch">
+                        <input type="checkbox" id="ttsToggle" checked>
+                        <span class="slider"></span>
+                    </label>
                 </div>
-                
-                <select id="voiceSelector" style="width:180px; margin:0;"></select>
-
-                <div id="profileFrame" class="profile-frame">
-                    <img id="profileImage" src="">
-                </div>
-                
-                <span id="connectedUser" style="color:var(--neon-green); font-weight:bold; font-size:0.9rem;"></span>
-                <button onclick="disconnectLive()" style="background:none; border:1px solid #ff4d4d; color:#ff4d4d; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:0.7rem; font-weight:bold;">DESCONECTAR</button>
             </div>
         </header>
 
-        <main>
-            <div id="conexion" class="section active">
-                <h1>🔌 Vincular TikTok LIVE</h1>
-                <div class="card" style="max-width: 500px; margin-top:20px;">
-                    <input id="tiktokUser" placeholder="Usuario TikTok sin @">
-                    <input id="accessKey" type="password" placeholder="Clave de acceso">
-                    <button id="btnConnect" class="btn-primary" onclick="connectTikTok()">CONECTAR AHORA</button>
+        <main style="padding: 30px;">
+            <div id="section-dashboard">
+                <div class="card">
+                    <h2>🔌 Conexión</h2>
+                    <p style="color:var(--text-muted); margin-bottom: 15px;">Ingresa tus credenciales para empezar.</p>
+                    <input id="tiktokUser" placeholder="Usuario de TikTok (ej: el_pepe)">
+                    <input id="accessKey" type="password" placeholder="Clave de acceso Nexora">
+                    <button onclick="connectTikTok()" style="width: 100%;">Vincular Cuenta Ahora</button>
                 </div>
+
+                <div class="stats-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
+                    <div class="card" style="text-align:center;">
+                        <div id="count-viewers" style="font-size: 1.5rem; color: var(--neon-green); font-weight: 800;">0</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Espectadores</div>
+                    </div>
+                    </div>
             </div>
 
-            <div id="chat" class="section">
-                <h1>💬 Chat en tiempo real</h1>
-                <div id="chat-list" style="margin-top:20px;"></div>
-            </div>
-
-            <div id="gifts" class="section">
-                <h1>🎁 Historial de Regalos</h1>
-                <div id="gifts-list" style="margin-top:20px;"></div>
-            </div>
-
-            <div id="actions" class="section">
-                <h1>⚡ Configurar Acciones por Regalo</h1>
-                <div class="card" style="max-width: 500px; margin-top:20px;">
-                    <input id="actionGift" placeholder="Nombre del regalo (ej: Rosa)">
-                    <input id="actionFile" placeholder="Ruta del sonido (ej: /media/susto.mp3)">
-                    <button class="btn-primary" onclick="createAction()">GUARDAR ACCIÓN</button>
+            <div id="section-actions" style="display:none;">
+                <div class="card">
+                    <h3>⚡ Crear Nueva Acción</h3>
+                    <input id="actionGift" placeholder="Nombre del Regalo (ej: Rosa)">
+                    <input id="actionFile" placeholder="Comando o Sonido (ej: /scary.mp3)">
+                    <button onclick="createAction()">Guardar Acción</button>
                 </div>
-                <h3>Acciones Activas</h3>
-                <div id="actionList" style="margin-top:15px;"></div>
+                <div id="actionList"></div>
             </div>
         </main>
     </div>
 
+    <aside class="live-feed">
+        <h3 style="margin-bottom:15px; color: var(--neon-purple);">Actividad en Vivo</h3>
+        <div id="feed-container" style="overflow-y:auto; flex:1;">
+            <div class="feed-item" style="border-left-color: var(--neon-green);">
+                <strong>Sistema:</strong> Esperando conexión...
+            </div>
+        </div>
+    </aside>
+
     <script>
         const socket = io();
-        let tempUsername = "";
         let ttsEnabled = true;
         let selectedVoice = null;
 
-        function showSection(id, btn) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            btn.classList.add('active');
+        // --- NAVEGACIÓN ---
+        function showSection(section) {
+            document.getElementById('section-dashboard').style.display = section === 'dashboard' ? 'block' : 'none';
+            document.getElementById('section-actions').style.display = section === 'actions-config' ? 'block' : 'none';
         }
 
-        // --- CONEXIÓN Y CARGA ---
+        // --- CONEXIÓN ---
         function connectTikTok() {
-            const btn = document.getElementById("btnConnect");
             const username = document.getElementById("tiktokUser").value.trim();
             const key = document.getElementById("accessKey").value.trim();
-            
-            if(!username || !key) return alert("Completa los datos");
 
-            btn.classList.add("loading");
-            tempUsername = username;
+            if(!username) return alert("Escribe tu usuario");
+            
+            // Mostrar Animación de Carga
+            document.getElementById("loadingOverlay").style.display = "flex";
 
             socket.emit("startConnection", { username, key });
-            socket.emit("getActions", username);
         }
 
         socket.on("status", (status) => {
-            document.getElementById("btnConnect").classList.remove("loading");
-            const badge = document.getElementById("statusBadge");
-            
+            // Ocultar carga al recibir respuesta
+            document.getElementById("loadingOverlay").style.display = "none";
+
             if(status === "connected") {
-                badge.innerText = "● CONECTADO";
-                badge.classList.add("connected");
-                document.getElementById("connectedUser").innerText = "@" + tempUsername;
-            } else if(status === "disconnected") {
-                badge.innerText = "● DESCONECTADO";
-                badge.classList.remove("connected");
-                document.getElementById("profileFrame").style.display = "none";
-                document.getElementById("connectedUser").innerText = "";
-            } else if(status === "invalid_key") {
-                alert("Clave de acceso inválida");
+                document.getElementById("statusDot").classList.add("active");
+                document.getElementById("statusText").innerText = "CONECTADO";
+                document.getElementById("connectedUser").innerText = "@" + document.getElementById("tiktokUser").value;
+            } else {
+                document.getElementById("statusDot").classList.remove("active");
+                document.getElementById("statusText").innerText = "DESCONECTADO";
             }
         });
 
-        socket.on("connectedUserData", (data) => {
-            if(data.profilePictureUrl) {
-                document.getElementById("profileImage").src = data.profilePictureUrl;
-                document.getElementById("profileFrame").style.display = "block";
-            }
-        });
-
-        // --- VOCES Y TTS ---
+        // --- TTS LÓGICA ---
         function loadVoices() {
-            const voices = speechSynthesis.getVoices();
+            const voices = window.speechSynthesis.getVoices();
             const selector = document.getElementById("voiceSelector");
-            selector.innerHTML = "";
-            voices.forEach((v, i) => {
-                const opt = document.createElement("option");
-                opt.value = i; opt.textContent = v.name;
-                selector.appendChild(opt);
-            });
-            if(voices.length > 0) selectedVoice = voices[0];
+            selector.innerHTML = voices.map((v, i) => `<option value="${i}">${v.name}</option>`).join('');
+            selectedVoice = voices[0];
         }
-        speechSynthesis.onvoiceschanged = loadVoices;
-        window.onload = loadVoices;
 
-        function toggleTTS() {
-            ttsEnabled = !ttsEnabled;
-            document.getElementById("ttsToggle").classList.toggle("active");
-        }
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        document.getElementById("voiceSelector").addEventListener("change", (e) => {
+            selectedVoice = window.speechSynthesis.getVoices()[e.target.value];
+        });
 
         function speak(text) {
-            if(!ttsEnabled) return;
+            if(!document.getElementById("ttsToggle").checked) return;
             const msg = new SpeechSynthesisUtterance(text);
             if(selectedVoice) msg.voice = selectedVoice;
             window.speechSynthesis.speak(msg);
         }
 
-        // --- CHAT Y REGALOS ---
+        // --- EVENTOS DE SOCKET ---
         socket.on("chat", (data) => {
-            const div = document.createElement("div");
-            div.className = "card-event";
-            div.innerHTML = `<strong>${data.user}:</strong> ${data.message}`;
-            document.getElementById("chat-list").prepend(div);
-            speak(`${data.user} dice ${data.message}`);
+            addFeedItem("💬", data.user, data.message, "var(--neon-purple)");
+            speak(`${data.user} dice: ${data.message}`);
         });
 
         socket.on("gift", (data) => {
-            const div = document.createElement("div");
-            div.className = "card-event";
-            div.style.borderLeftColor = "var(--neon-green)";
-            div.innerHTML = `🎁 <strong>${data.user}</strong> envió ${data.gift} x${data.amount}`;
-            document.getElementById("gifts-list").prepend(div);
+            addFeedItem("🎁", data.user, `envió ${data.gift} x${data.amount}`, "var(--neon-green)");
         });
 
-        // --- ACCIONES ---
-        function createAction() {
-            const gift = document.getElementById("actionGift").value.trim();
-            const file = document.getElementById("actionFile").value.trim();
-            if(!gift || !file) return alert("Completa los campos de acción");
-
-            socket.emit("createAction", { username: tempUsername, gift, file });
-            
-            // Agregar a la lista visualmente
+        function addFeedItem(icon, user, text, color) {
+            const container = document.getElementById("feed-container");
             const div = document.createElement("div");
-            div.className = "card-event";
-            div.style.borderLeftColor = "var(--neon-purple)";
-            div.innerHTML = `⚡ Regalo: <b>${gift}</b> → Sonido: <i>${file}</i>`;
-            document.getElementById("actionList").appendChild(div);
-
-            document.getElementById("actionGift").value = "";
-            document.getElementById("actionFile").value = "";
+            div.className = "feed-item";
+            div.style.borderLeftColor = color;
+            div.innerHTML = `${icon} <strong>${user}</strong> ${text}`;
+            container.prepend(div);
         }
 
-        function disconnectLive() { socket.emit("disconnectLive"); }
+        function disconnectLive() {
+            socket.emit("disconnectLive");
+            location.reload();
+        }
     </script>
 </body>
 </html>
