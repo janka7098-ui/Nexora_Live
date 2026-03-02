@@ -2,8 +2,8 @@ const express = require("express");
 const http = require("http");
 const { WebcastPushConnection } = require("tiktok-live-connector");
 const socketIo = require("socket.io");
-const fs = require("fs");          // 🔥 NUEVO
-const path = require("path");      // 🔥 NUEVO
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
@@ -11,7 +11,10 @@ const io = socketIo(server);
 
 app.use(express.static("public"));
 
-/* 🔥 NUEVA RUTA PARA LISTA DE REGALOS */
+/* =========================
+   LISTA AUTOMÁTICA DE REGALOS
+========================= */
+
 app.get("/gift-list", (req, res) => {
 
   const giftsPath = path.join(__dirname, "public", "regalos");
@@ -26,13 +29,17 @@ app.get("/gift-list", (req, res) => {
       .filter(file => file.endsWith(".png"))
       .map(file => ({
         name: file.replace(".png", ""),
-        diamonds: 0 // luego podemos agregar valores reales
+        diamonds: 0
       }));
 
     res.json(giftList);
   });
 
 });
+
+/* =========================
+   CONFIGURACIÓN
+========================= */
 
 const allowedKeys = [
   "nexora01","nexora02","nexora03","nexora04","nexora05",
@@ -42,7 +49,13 @@ const allowedKeys = [
 const activeConnections = new Map();
 const userActions = new Map();
 
+/* =========================
+   SOCKET.IO
+========================= */
+
 io.on("connection", (socket) => {
+
+  /* ===== VALIDAR CLAVE ===== */
 
   socket.on("validateKey", (key) => {
     if (allowedKeys.includes(key)) {
@@ -51,6 +64,8 @@ io.on("connection", (socket) => {
       socket.emit("keyInvalid");
     }
   });
+
+  /* ===== INICIAR CONEXIÓN TIKTOK ===== */
 
   socket.on("startConnection", async ({ username }) => {
 
@@ -70,6 +85,25 @@ io.on("connection", (socket) => {
 
       socket.emit("status", "connected");
 
+      /* =========================
+         OBTENER FOTO REAL PERFIL
+      ========================= */
+
+      try {
+
+        const roomInfo = await tiktok.getRoomInfo();
+
+        socket.emit("connectedUserData", {
+          username: username,
+          profilePictureUrl: roomInfo?.owner?.avatarLarger || null
+        });
+
+      } catch (err) {
+        console.log("No se pudo obtener avatar:", err);
+      }
+
+      /* ===== REGALOS ===== */
+
       tiktok.on("gift", (data) => {
         if (data.repeatEnd) {
           socket.emit("gift", {
@@ -80,6 +114,8 @@ io.on("connection", (socket) => {
         }
       });
 
+      /* ===== CHAT ===== */
+
       tiktok.on("chat", (data) => {
         socket.emit("chat", {
           user: data.nickname,
@@ -88,9 +124,14 @@ io.on("connection", (socket) => {
       });
 
     } catch (err) {
+      console.log("Error conexión TikTok:", err);
       socket.emit("status", "error");
     }
   });
+
+  /* =========================
+     ACCIONES POR USUARIO
+  ========================= */
 
   socket.on("saveAction", ({ username, action }) => {
 
@@ -119,6 +160,10 @@ io.on("connection", (socket) => {
     socket.emit("actionsUpdated", actions);
   });
 
+  /* =========================
+     DESCONECTAR
+  ========================= */
+
   socket.on("disconnectLive", () => {
     if (activeConnections.has(socket.id)) {
       try { activeConnections.get(socket.id).disconnect(); } catch {}
@@ -136,7 +181,12 @@ io.on("connection", (socket) => {
 
 });
 
+/* =========================
+   SERVER
+========================= */
+
 const PORT = process.env.PORT || 10000;
+
 server.listen(PORT, () => {
   console.log("🚀 Nexora activo en puerto", PORT);
 });
