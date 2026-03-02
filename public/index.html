@@ -108,7 +108,7 @@
         </div>
 
         <div class="flex gap-4 items-center">
-            <div id="login-inputs" class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1">
                 <input id="username" type="text" placeholder="@usuario_tiktok" class="bg-black/60 border border-zinc-800 px-4 py-2 rounded-lg text-sm focus:border-purple-500 outline-none w-56 transition-all font-medium">
                 <input id="key" type="password" placeholder="Access Key" class="bg-black/60 border border-zinc-800 px-4 py-2 rounded-lg text-sm focus:border-purple-500 outline-none w-56 transition-all font-medium">
             </div>
@@ -207,6 +207,7 @@
         const synth = window.speechSynthesis;
         let voices = [];
 
+        // CARGAR VOCES TTS
         function loadVoices() {
             voices = synth.getVoices();
             const voiceSelect = document.getElementById('tts-voice');
@@ -225,10 +226,12 @@
             synth.speak(utter);
         }
 
+        // Volumen UI
         document.getElementById('tts-volume').oninput = (e) => {
             document.getElementById('vol-perc').innerText = Math.round(e.target.value * 100) + "%";
         };
 
+        // --- LÓGICA DE MODOS ---
         let currentMode = 'mp3';
         function setMode(mode) {
             currentMode = mode;
@@ -255,8 +258,8 @@
         const btnDisconnect = document.getElementById('btn-disconnect');
         const statusText = document.getElementById('connection-status');
         const statusPulse = document.getElementById('status-pulse');
-        const loginInputs = document.getElementById('login-inputs');
 
+        // BOTÓN GUARDAR
         document.getElementById('btn-save-action').onclick = () => {
             const username = document.getElementById('username').value;
             const gift = document.getElementById('gift-select').value;
@@ -282,7 +285,7 @@
             }
         };
 
-        // EVENTO CONECTAR
+        // BOTÓN CONECTAR
         btnConnect.onclick = () => {
             const username = document.getElementById('username').value;
             const key = document.getElementById('key').value;
@@ -291,13 +294,14 @@
             socket.emit("startConnection", { username, key });
         };
 
-        // EVENTO DESCONECTAR (AÑADIDO)
+        // BOTÓN SALIR (CORREGIDO Y COMPLETO)
         btnDisconnect.onclick = () => {
             const username = document.getElementById('username').value;
             loader.style.display = 'flex';
             socket.emit("stopConnection", { username });
         };
 
+        // MANEJO DE ESTADOS
         socket.on("status", (status) => {
             loader.style.display = 'none';
             if (status === "connected") {
@@ -305,18 +309,16 @@
                 statusText.className = "text-[11px] uppercase tracking-[4px] text-green-500 font-bold italic";
                 statusPulse.className = "w-2.5 h-2.5 rounded-full bg-green-500 animate-ping";
                 btnConnect.classList.add('hidden');
-                loginInputs.classList.add('hidden'); // Ocultamos inputs para limpieza
                 btnDisconnect.classList.remove('hidden');
                 speak("Sistema Nexora Ultra activado.");
                 socket.emit("getActions", document.getElementById('username').value);
-            } else if (status === "disconnected") {
+            } else {
                 statusText.innerText = "DESCONECTADO";
                 statusText.className = "text-[11px] uppercase tracking-[4px] text-red-500 font-bold italic";
                 statusPulse.className = "w-2.5 h-2.5 rounded-full bg-red-500";
                 btnConnect.classList.remove('hidden');
-                loginInputs.classList.remove('hidden');
                 btnDisconnect.classList.add('hidden');
-                speak("Sistema fuera de línea.");
+                if(status === "disconnected") speak("Conexión finalizada.");
             }
         });
 
