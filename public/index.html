@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexora Ultra | Dashboard</title>
+    <title>Nexora Ultra | Dashboard & Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -13,6 +13,7 @@
         :root {
             --purple: #8A2BE2;
             --green: #39FF14;
+            --red: #FF3131;
             --bg: #050507;
         }
 
@@ -22,6 +23,7 @@
             color: #efefef;
             overflow-x: hidden;
             background-image: radial-gradient(circle at 50% -20%, #1a0b2e 0%, var(--bg) 80%);
+            min-height: 100vh;
         }
 
         .glass {
@@ -79,19 +81,60 @@
             color: black;
         }
 
+        /* --- ESTILOS DE PESTAÑAS (TABS) --- */
+        .tab-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .tab-btn.active {
+            border-color: var(--purple);
+            color: white;
+            background: rgba(138, 43, 226, 0.05);
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 40px; height: 10px;
+            background: var(--purple);
+            filter: blur(8px);
+            border-radius: 50%;
+        }
+
+        /* --- ESTILOS DEL JUEGO --- */
+        .hp-bar-fill {
+            transition: width 0.3s ease-out, background-color 0.3s;
+        }
+        .ability-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+        .game-glow-red {
+            box-shadow: 0 0 20px rgba(255, 49, 49, 0.15);
+        }
+        .game-glow-green {
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.15);
+        }
+
         @keyframes spin { to { transform: rotate(360deg); } }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 10px; }
+        @keyframes pulse-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .animate-pulse-red { animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-6 pb-12">
 
     <div id="loader">
         <div class="spinner"></div>
         <p class="mt-4 text-purple-500 font-bold tracking-widest animate-pulse uppercase">Procesando Datos...</p>
     </div>
 
-    <nav class="max-w-[1700px] mx-auto mb-8 flex items-center justify-between glass p-6">
+    <nav class="max-w-[1700px] mx-auto mb-6 flex items-center justify-between glass p-6">
         <div class="flex items-center gap-6">
             <div class="relative group">
                 <div class="absolute -inset-2 bg-purple-600 rounded-full blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
@@ -117,98 +160,163 @@
         </div>
     </nav>
 
-    <main class="max-w-[1700px] mx-auto grid grid-cols-12 gap-8">
-        <div class="col-span-12 lg:col-span-3 space-y-8">
-            <section class="glass p-6">
-                <h2 class="text-green-400 font-bold uppercase text-xs mb-4 flex items-center gap-2 italic tracking-widest"><i data-lucide="upload-cloud" class="w-4"></i> Configurar Alerta</h2>
-                
-                <div class="flex bg-black/40 p-1 rounded-lg border border-zinc-800 mb-4">
-                    <button onclick="setMode('mp3')" id="mode-mp3" class="mode-btn active flex-1 py-2 text-[10px] font-bold uppercase rounded-md">Modo MP3</button>
-                    <button onclick="setMode('link')" id="mode-link" class="mode-btn flex-1 py-2 text-[10px] font-bold uppercase rounded-md">Webhook Juego</button>
+    <div class="max-w-[1700px] mx-auto mb-8 flex gap-2 glass p-2 bg-black/20 border-zinc-900">
+        <button onclick="showTab('dashboard')" id="tab-btn-dashboard" class="tab-btn active flex-1 py-4 rounded-xl flex items-center justify-center gap-3 text-sm font-bold uppercase tracking-widest text-zinc-400 hover:text-white">
+            <i data-lucide="layout-dashboard" class="w-5 h-5 text-purple-500"></i>
+            Dashboard
+        </button>
+        <button onclick="showTab('game')" id="tab-btn-game" class="tab-btn flex-1 py-4 rounded-xl flex items-center justify-center gap-3 text-sm font-bold uppercase tracking-widest text-zinc-400 hover:text-white">
+            <i data-lucide="gamepad-2" class="w-5 h-5 text-green-500 animate-pulse"></i>
+            Juego Nexora
+        </button>
+    </div>
+
+    <div class="max-w-[1700px] mx-auto">
+        
+        <main id="view-dashboard" class="grid grid-cols-12 gap-8">
+            <div class="col-span-12 lg:col-span-3 space-y-8">
+                <section class="glass p-6">
+                    <h2 class="text-green-400 font-bold uppercase text-xs mb-4 flex items-center gap-2 italic tracking-widest"><i data-lucide="upload-cloud" class="w-4"></i> Configurar Alerta</h2>
+                    
+                    <div class="flex bg-black/40 p-1 rounded-lg border border-zinc-800 mb-4">
+                        <button onclick="setMode('mp3')" id="mode-mp3" class="mode-btn active flex-1 py-2 text-[10px] font-bold uppercase rounded-md">Modo MP3</button>
+                        <button onclick="setMode('link')" id="mode-link" class="mode-btn flex-1 py-2 text-[10px] font-bold uppercase rounded-md">Webhook Juego</button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <select id="gift-select" class="gift-selector w-full bg-black/60 border border-zinc-700 p-4 rounded-xl text-sm outline-none focus:border-purple-500 text-zinc-300 font-bold">
+                            <option value="" disabled selected>Seleccionar Regalo...</option>
+                        </select>
+                        
+                        <div id="container-mp3">
+                            <input type="file" id="file-input" accept="audio/mpeg" class="hidden">
+                            <button onclick="document.getElementById('file-input').click()" class="w-full bg-zinc-900 border border-dashed border-zinc-700 p-4 rounded-lg text-xs text-zinc-400 hover:border-purple-500 transition-all flex flex-col items-center gap-2">
+                                <i data-lucide="music" class="w-5 h-5 text-purple-500"></i>
+                                <span id="file-name">Seleccionar MP3...</span>
+                            </button>
+                        </div>
+
+                        <div id="container-link" class="hidden">
+                            <input id="link-input" type="text" placeholder="http://localhost:8080/comando" class="w-full bg-black/60 border border-zinc-800 p-4 rounded-lg text-xs text-green-400 outline-none focus:border-green-500 font-mono">
+                        </div>
+
+                        <button id="btn-save-action" class="w-full bg-white text-black font-black py-4 rounded-xl text-xs uppercase hover:bg-green-500 transition-all shadow-lg">Guardar y Vincular</button>
+                    </div>
+                </section>
+
+                <section class="glass p-6 h-[350px] flex flex-col">
+                    <h2 class="text-purple-400 font-bold uppercase text-xs mb-4 italic tracking-widest">Eventos Activos</h2>
+                    <div id="actions-list" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
+                </section>
+            </div>
+
+            <div class="col-span-12 lg:col-span-6 grid grid-cols-1 md:grid-cols-2 gap-8 h-[650px]">
+                <div class="glass flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-zinc-900 flex justify-between items-center bg-black/20">
+                        <span class="text-xs font-bold tracking-widest italic"><i data-lucide="message-square" class="inline w-3 mr-1 text-purple-500"></i> CHAT</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] text-zinc-500 uppercase">TTS</span>
+                            <input type="checkbox" id="tts-enabled" checked class="accent-green-500 h-4 w-4 cursor-pointer">
+                        </div>
+                    </div>
+                    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
                 </div>
 
-                <div class="space-y-4">
-                    <select id="gift-select" class="gift-selector w-full bg-black/60 border border-zinc-700 p-4 rounded-xl text-sm outline-none focus:border-purple-500 text-zinc-300 font-bold">
-                        <option value="" disabled selected>Seleccionar Regalo...</option>
-                    </select>
-                    
-                    <div id="container-mp3">
-                        <input type="file" id="file-input" accept="audio/mpeg" class="hidden">
-                        <button onclick="document.getElementById('file-input').click()" class="w-full bg-zinc-900 border border-dashed border-zinc-700 p-4 rounded-lg text-xs text-zinc-400 hover:border-purple-500 transition-all flex flex-col items-center gap-2">
-                            <i data-lucide="music" class="w-5 h-5 text-purple-500"></i>
-                            <span id="file-name">Seleccionar MP3...</span>
+                <div class="glass flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-zinc-900 bg-black/20">
+                        <span class="text-xs font-bold tracking-widest text-green-400 italic"><i data-lucide="star" class="inline w-3 mr-1"></i> REGALOS RECIENTES</span>
+                    </div>
+                    <div id="gift-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-3 space-y-8">
+                <section class="glass p-6">
+                    <h2 class="text-xs font-bold uppercase mb-4 text-zinc-500 italic">Controles Maestro</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <label class="text-[10px] text-zinc-500 uppercase">Volumen Voces</label>
+                                <span id="vol-perc" class="text-[10px] text-purple-500 font-bold">70%</span>
+                            </div>
+                            <input id="tts-volume" type="range" min="0" max="1" step="0.1" value="0.7" class="w-full accent-purple-600 cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-zinc-500 block mb-2 uppercase">Voz de Narración</label>
+                            <select id="tts-voice" class="gift-selector w-full bg-black/40 border border-zinc-800 p-3 rounded-lg text-[11px] text-white outline-none focus:border-purple-500"></select>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="glass flex flex-col h-[435px]">
+                    <div class="p-4 border-b border-zinc-900 bg-black/20 text-center">
+                        <h2 class="text-xs font-bold uppercase tracking-widest italic">Historial Sesión</h2>
+                    </div>
+                    <div id="gift-history" class="flex-1 overflow-y-auto p-3 space-y-2 text-[11px] font-mono text-zinc-600"></div>
+                </section>
+            </div>
+        </main>
+
+        <main id="view-game" class="hidden space-y-8">
+            
+            <section class="glass p-8 border-red-900 game-glow-red relative overflow-hidden">
+                <div class="absolute inset-0 bg-black/60 z-0"></div>
+                <div class="relative z-10 grid grid-cols-12 gap-6 items-center">
+                    <div class="col-span-12 md:col-span-3 flex flex-col items-center justify-center border-r border-zinc-800 pr-6">
+                        <i data-lucide="skull" class="w-20 h-20 text-red-600 animate-pulse-red"></i>
+                        <p class="text-[10px] uppercase text-zinc-500 tracking-[5px] mt-2">Enemigo Comunitario</p>
+                    </div>
+                    <div class="col-span-12 md:col-span-9 space-y-4">
+                        <div class="flex justify-between items-end">
+                            <h3 class="text-4xl font-black text-white italic tracking-tighter uppercase">CYBER DRAGON <span class="text-red-500">v1.0</span></h3>
+                            <span class="text-2xl font-mono text-red-400 font-bold" id="boss-hp-text">1000 / 1000 HP</span>
+                        </div>
+                        <div class="w-full h-6 bg-black/60 rounded-full border border-zinc-800 overflow-hidden relative">
+                            <div class="absolute inset-0 bg-red-600/10 blur-sm rounded-full hp-bar-fill" style="width: 100%" id="boss-hp-bar-glow"></div>
+                            <div class="relative h-full bg-red-600 hp-bar-fill" style="width: 100%" id="boss-hp-bar"></div>
+                        </div>
+                        <p class="text-xs text-zinc-400 font-medium italic">El Chat hace daño con <span class="text-green-400 font-bold">Likes</span> y <span class="text-purple-400 font-bold">Regalos</span>. ¡Derrótenlo!</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <div class="glass p-6 game-glow-green border-green-900 flex items-center gap-6">
+                    <i data-lucide="shield-check" class="w-16 h-16 text-green-500"></i>
+                    <div class="flex-1 space-y-2">
+                        <h4 class="text-sm font-bold uppercase text-zinc-400 tracking-widest">Estado Nexora Master</h4>
+                        <p class="text-3xl font-black text-white italic">OPERATIVO</p>
+                        <div class="w-full h-3 bg-black/60 rounded-full border border-zinc-800 overflow-hidden">
+                            <div class="h-full bg-green-500 hp-bar-fill" style="width: 100%" id="player-hp-bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass p-6 space-y-4">
+                    <h4 class="text-xs font-bold uppercase text-zinc-500 italic tracking-widest mb-2"><i data-lucide="zap" class="inline w-3 mr-1 text-yellow-400"></i> Habilidades Nexora Ultra (Usa para ayudar al chat)</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="useAbility('attack')" id="ability-attack" class="ability-btn bg-white text-black font-black py-4 rounded-xl text-xs uppercase hover:bg-red-500 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2">
+                            <i data-lucide="sword" class="w-4 h-4"></i>
+                            Mega Ataque
+                        </button>
+                        <button onclick="useAbility('heal')" id="ability-heal" class="ability-btn bg-black border border-green-600 text-green-400 font-black py-4 rounded-xl text-xs uppercase hover:bg-green-600 hover:text-white transition-all shadow-lg flex items-center justify-center gap-2">
+                            <i data-lucide="heart-pulse" class="w-4 h-4"></i>
+                            Auto Curación
                         </button>
                     </div>
-
-                    <div id="container-link" class="hidden">
-                        <input id="link-input" type="text" placeholder="http://localhost:8080/comando" class="w-full bg-black/60 border border-zinc-800 p-4 rounded-lg text-xs text-green-400 outline-none focus:border-green-500 font-mono">
-                    </div>
-
-                    <button id="btn-save-action" class="w-full bg-white text-black font-black py-4 rounded-xl text-xs uppercase hover:bg-green-500 transition-all shadow-lg">Guardar y Vincular</button>
                 </div>
             </section>
 
-            <section class="glass p-6 h-[350px] flex flex-col">
-                <h2 class="text-purple-400 font-bold uppercase text-xs mb-4 italic tracking-widest">Eventos Activos</h2>
-                <div id="actions-list" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
-            </section>
-        </div>
-
-        <div class="col-span-12 lg:col-span-6 grid grid-cols-1 md:grid-cols-3 gap-4 h-[650px]">
-            
-            <div class="glass flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-zinc-900 flex justify-between items-center bg-black/20">
-                    <span class="text-xs font-bold tracking-widest italic"><i data-lucide="message-square" class="inline w-3 mr-1 text-purple-500"></i> CHAT</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[9px] text-zinc-500 uppercase">TTS</span>
-                        <input type="checkbox" id="tts-enabled" checked class="accent-green-500 h-4 w-4 cursor-pointer">
-                    </div>
-                </div>
-                <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
-            </div>
-
-            <div class="glass flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-zinc-900 bg-black/20">
-                    <span class="text-xs font-bold tracking-widest text-green-400 italic"><i data-lucide="star" class="inline w-3 mr-1"></i> REGALOS RECIENTES</span>
-                </div>
-                <div id="gift-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
-            </div>
-
-            <div class="glass flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-zinc-900 bg-black/20">
-                    <span class="text-xs font-bold tracking-widest text-red-500 italic"><i data-lucide="flame" class="inline w-3 mr-1"></i> TOP LIKES</span>
-                </div>
-                <div id="ranking-container" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
-            </div>
-
-        </div>
-
-        <div class="col-span-12 lg:col-span-3 space-y-8">
-            <section class="glass p-6">
-                <h2 class="text-xs font-bold uppercase mb-4 text-zinc-500 italic">Controles Maestro</h2>
-                <div class="space-y-6">
-                    <div>
-                        <div class="flex justify-between mb-1">
-                            <label class="text-[10px] text-zinc-500 uppercase">Volumen Voces</label>
-                            <span id="vol-perc" class="text-[10px] text-purple-500 font-bold">70%</span>
-                        </div>
-                        <input id="tts-volume" type="range" min="0" max="1" step="0.1" value="0.7" class="w-full accent-purple-600 cursor-pointer">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-zinc-500 block mb-2 uppercase">Voz de Narración</label>
-                        <select id="tts-voice" class="gift-selector w-full bg-black/40 border border-zinc-800 p-3 rounded-lg text-[11px] text-white outline-none focus:border-purple-500"></select>
-                    </div>
+            <section class="glass p-6 h-[250px] flex flex-col">
+                <h2 class="text-green-400 font-bold uppercase text-xs mb-4 italic tracking-widest"><i data-lucide="swords" class="w-4 inline mr-1"></i> Registro de Combate</h2>
+                <div id="game-log" class="flex-1 overflow-y-auto space-y-1.5 text-xs font-mono text-zinc-500 pr-2">
+                    <p class="text-zinc-400">[SISTEMA] Esperando conexión de TikTok Live para iniciar combate...</p>
                 </div>
             </section>
 
-            <section class="glass flex flex-col h-[435px]">
-                <div class="p-4 border-b border-zinc-900 bg-black/20 text-center">
-                    <h2 class="text-xs font-bold uppercase tracking-widest italic">Historial Sesión</h2>
-                </div>
-                <div id="gift-history" class="flex-1 overflow-y-auto p-3 space-y-2 text-[11px] font-mono text-zinc-600"></div>
-            </section>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <script>
         const socket = io();
@@ -239,6 +347,28 @@
         document.getElementById('tts-volume').oninput = (e) => {
             document.getElementById('vol-perc').innerText = Math.round(e.target.value * 100) + "%";
         };
+
+        // --- LÓGICA DE PESTAÑAS (NEW) ---
+        function showTab(tabName) {
+            const viewDashboard = document.getElementById('view-dashboard');
+            const viewGame = document.getElementById('view-game');
+            const btnDashboard = document.getElementById('tab-btn-dashboard');
+            const btnGame = document.getElementById('tab-btn-game');
+
+            if (tabName === 'dashboard') {
+                viewDashboard.classList.remove('hidden');
+                viewGame.classList.add('hidden');
+                btnDashboard.classList.add('active');
+                btnGame.classList.remove('active');
+            } else {
+                viewDashboard.classList.add('hidden');
+                viewGame.classList.remove('hidden');
+                btnDashboard.classList.remove('active');
+                btnGame.classList.add('active');
+            }
+            // Refrescar iconos lucide en la nueva vista
+            lucide.createIcons();
+        }
 
         // --- LÓGICA DE MODOS ---
         let currentMode = 'mp3';
@@ -305,9 +435,8 @@
 
         // BOTÓN SALIR
         btnDisconnect.onclick = () => {
-            const username = document.getElementById('username').value;
             loader.style.display = 'flex';
-            socket.emit("stopConnection", { username });
+            socket.emit("stopConnection");
         };
 
         // MANEJO DE ESTADOS
@@ -321,17 +450,162 @@
                 btnDisconnect.classList.remove('hidden');
                 speak("Sistema Nexora Ultra activado.");
                 socket.emit("getActions", document.getElementById('username').value);
+                // Iniciar lógica de juego al conectar
+                resetGame();
             } else {
                 statusText.innerText = "DESCONECTADO";
                 statusText.className = "text-[11px] uppercase tracking-[4px] text-red-500 font-bold italic";
                 statusPulse.className = "w-2.5 h-2.5 rounded-full bg-red-500";
                 btnConnect.classList.remove('hidden');
                 btnDisconnect.classList.add('hidden');
-                if(status === "disconnected") speak("Conexión finalizada.");
+                if(status === "disconnected") {
+                    speak("Conexión finalizada.");
+                    logCombat("[SISTEMA] Conexión perdida. Combate pausado.");
+                }
             }
         });
 
+        // --- LÓGICA DEL JUEGO INTERACTIVO (NEW) ---
+        const gameState = {
+            isConnected: false,
+            bossMaxHp: 10000,
+            bossHp: 10000,
+            playerMaxHp: 100,
+            playerHp: 100,
+            cooldowns: {
+                attack: 15, // segundos
+                heal: 30
+            }
+        };
+
+        const bossHpBar = document.getElementById('boss-hp-bar');
+        const bossHpBarGlow = document.getElementById('boss-hp-bar-glow');
+        const bossHpText = document.getElementById('boss-hp-text');
+        const playerHpBar = document.getElementById('player-hp-bar');
+        const gameLog = document.getElementById('game-log');
+
+        function resetGame() {
+            gameState.isConnected = true;
+            gameState.bossHp = gameState.bossMaxHp;
+            gameState.playerHp = gameState.playerMaxHp;
+            updateGameUI();
+            logCombat("<span class='text-white font-bold'>[COMBATE] ¡El CYBER DRAGON ha aparecido! ¡Chat, ataquen!</span>");
+            
+            // Ciclo de ataque del boss (daño periódico al streamer)
+            if(window.bossAttackInterval) clearInterval(window.bossAttackInterval);
+            window.bossAttackInterval = setInterval(bossAttackStreamer, 10000); // Ataca cada 10s
+        }
+
+        function updateGameUI() {
+            // Actualizar Boss
+            const bossHpPercent = (gameState.bossHp / gameState.bossMaxHp) * 100;
+            bossHpBar.style.width = `${bossHpPercent}%`;
+            bossHpBarGlow.style.width = `${bossHpPercent}%`;
+            bossHpText.innerText = `${Math.round(gameState.bossHp)} / ${gameState.bossMaxHp} HP`;
+
+            // Cambiar color barra boss si tiene poca vida
+            if(bossHpPercent < 25) {
+                bossHpBar.classList.add('bg-yellow-400');
+                bossHpBar.classList.remove('bg-red-600');
+            } else {
+                bossHpBar.classList.add('bg-red-600');
+                bossHpBar.classList.remove('bg-yellow-400');
+            }
+
+            // Actualizar Streamer
+            const playerHpPercent = (gameState.playerHp / gameState.playerMaxHp) * 100;
+            playerHpBar.style.width = `${playerHpPercent}%`;
+        }
+
+        function logCombat(message) {
+            const p = document.createElement('p');
+            p.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            gameLog.prepend(p);
+            if(gameLog.children.length > 50) gameLog.lastChild.remove(); // Limitar logs
+        }
+
+        // Ataques de la AUDIENCIA (vía Socket)
+        function damageBoss(amount, source, isRegalo = false) {
+            if(!gameState.isConnected || gameState.bossHp <= 0) return;
+
+            gameState.bossHp -= amount;
+            if(gameState.bossHp <= 0) {
+                gameState.bossHp = 0;
+                logCombat("<span class='text-green-400 font-black text-lg'>¡VICTORIA! ¡El Chat ha derrotado al Cyber Dragon!</span>");
+                speak("¡Increíble! El chat ha ganado la batalla.");
+                clearInterval(window.bossAttackInterval);
+            } else {
+                if(isRegalo) {
+                    logCombat(`<i data-lucide="star" class="inline w-3 text-purple-400"></i> <b class="text-purple-400">${source}</b> envió un regalo e hizo <b class="text-white">${amount}</b> de daño masivo.`);
+                } else {
+                    logCombat(`<i data-lucide="thumbs-up" class="inline w-3 text-green-400"></i> Daño por Likes: <b class="text-green-400">${amount}</b>.`);
+                }
+            }
+            updateGameUI();
+            lucide.createIcons();
+        }
+
+        // Ataque del Boss al Streamer
+        function bossAttackStreamer() {
+            if(!gameState.isConnected || gameState.bossHp <= 0 || gameState.playerHp <= 0) return;
+            
+            const damage = 10;
+            gameState.playerHp -= damage;
+            if(gameState.playerHp <= 0) {
+                gameState.playerHp = 0;
+                logCombat("<span class='text-red-500 font-black'>[DERROTA] El Nexora Master ha caído. El Boss gana esta ronda.</span>");
+                speak("Atención. Sistema operativo comprometido. He caído.");
+                clearInterval(window.bossAttackInterval);
+            } else {
+                logCombat(`<i data-lucide="zap" class="inline w-3 text-red-500"></i> El Dragon te atacó. <b class="text-red-400">-${damage} HP</b>.`);
+            }
+            updateGameUI();
+            lucide.createIcons();
+        }
+
+        // Habilidades del STREAMER
+        function useAbility(type) {
+            const btn = document.getElementById(`ability-${type}`);
+            if(!gameState.isConnected || gameState.bossHp <= 0 || gameState.playerHp <= 0 || btn.disabled) return;
+
+            if(type === 'attack') {
+                const dmg = 1000;
+                logCombat(`[HABILIDAD] Usaste <b class="text-white">MEGA ATAQUE</b>. Hiciste <b class="text-red-500">${dmg}</b> de daño.`);
+                damageBoss(dmg, "Streamer");
+                speak("Lanzando ataque especial.");
+            } else if(type === 'heal') {
+                const heal = 30;
+                gameState.playerHp += heal;
+                if(gameState.playerHp > gameState.playerMaxHp) gameState.playerHp = gameState.playerMaxHp;
+                logCombat(`[HABILIDAD] Usaste <b class="text-green-400">CURACIÓN</b>. Recuperaste <b class="text-green-400">${heal} HP</b>.`);
+                speak("Reparando sistemas.");
+                updateGameUI();
+            }
+
+            // Manejo de Cooldown
+            btn.disabled = true;
+            const originalText = btn.innerHTML;
+            let currentCd = gameState.cooldowns[type];
+            btn.innerText = `CD: ${currentCd}s`;
+
+            const cdInterval = setInterval(() => {
+                currentCd--;
+                if(currentCd <= 0) {
+                    clearInterval(cdInterval);
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    lucide.createIcons(); // Restaurar icono
+                } else {
+                    btn.innerText = `CD: ${currentCd}s`;
+                }
+            }, 1000);
+        }
+
+        // --- CONEXIÓN DE EVENTOS DE SOCKET CON DASHBOARD Y JUEGO ---
+
+        // 1. REGALOS
         socket.on("gift", (data) => {
+            // Dashboard UI
             const alertDiv = document.createElement('div');
             alertDiv.className = "bg-green-500/10 border border-green-500/40 p-4 rounded-xl flex justify-between items-center animate-bounce";
             alertDiv.innerHTML = `
@@ -341,13 +615,34 @@
                 </div>
                 <span class="text-2xl font-black text-green-400">x${data.amount}</span>`;
             document.getElementById('gift-container').prepend(alertDiv);
-            speak(`¡Gracias ${data.user} por enviar ${data.amount} ${data.gift}!`);
-
+            
+            // Historial UI
             const hist = document.createElement('div');
             hist.innerText = `[${new Date().toLocaleTimeString()}] ${data.user} envió ${data.gift}`;
             document.getElementById('gift-history').prepend(hist);
+            
+            // TTS
+            speak(`¡Gracias ${data.user} por enviar ${data.amount} ${data.gift}!`);
+
+            // --- Lógica del JUEGO ---
+            // Daño basado en la cantidad de regalos (por ejemplo, 50 daño por regalo)
+            const gameDamage = data.amount * 50;
+            damageBoss(gameDamage, data.user, true);
         });
 
+        // 2. LIKES (TAP TAP)
+        socket.on("likeRanking", (ranking) => {
+            // No hay panel de likes en dashboard, pero usamos el evento para el juego.
+            // Calculamos daño basado en la sumatoria total de likes de los top 10 (daño ligero)
+            // Esto es una simplificación, lo ideal es captar el evento de like individual si el server lo manda.
+            if(ranking && ranking.length > 0) {
+                // Hacemos un daño simbólico por cada actualización de ranking para simular "daño constante" por likes
+                const damageFromLikes = 15; 
+                damageBoss(damageFromLikes, "Likes del Chat");
+            }
+        });
+
+        // 3. CHAT
         socket.on("chat", (data) => {
             const div = document.createElement('div');
             div.className = "bg-zinc-900/50 p-3 rounded-lg border-l-2 border-purple-500 animate-fade-in";
@@ -356,6 +651,7 @@
             speak(`${data.user} dice: ${data.message}`);
         });
 
+        // Eventos estándar restantes
         socket.on("actionsUpdated", (actions) => {
             document.getElementById('actions-list').innerHTML = actions.map((a, i) => `
                 <div class="flex justify-between items-center bg-black/40 p-3 rounded-lg border border-zinc-800">
@@ -372,20 +668,6 @@
             const audio = new Audio(fileUrl);
             audio.volume = document.getElementById('tts-volume').value;
             audio.play();
-        });
-
-        // NUEVO: LÓGICA DEL RANKING DE TAP TAP (LIKES)
-        socket.on("likeRanking", (ranking) => {
-            const container = document.getElementById('ranking-container');
-            container.innerHTML = ranking.map(user => `
-                <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-red-500/20 hover:border-red-500/50 transition-colors">
-                    <div class="flex items-center gap-3 text-xs">
-                        <span class="text-red-500 font-black text-sm">#${user.rank}</span>
-                        <span class="font-bold text-zinc-300 truncate max-w-[100px]">${user.user}</span>
-                    </div>
-                    <span class="text-red-400 font-mono text-[11px] bg-red-500/10 px-2 py-1 rounded font-bold">${user.likes} ❤</span>
-                </div>
-            `).join('');
         });
 
         function deleteAction(index) {
