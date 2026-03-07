@@ -16,6 +16,7 @@
             --red: #FF3131;
             --bg: #050507;
             --cyan: #00FFFF;
+            --gold: #FFD700;
         }
 
         body {
@@ -99,9 +100,32 @@
             z-index: 20; pointer-events: none; line-height: 1; transition: color 0.3s;
         }
 
+        /* Paneles dentro de la Arena */
+        .arena-overlay-panel {
+            position: absolute;
+            top: 20px;
+            width: 250px;
+            max-height: calc(100% - 40px);
+            background: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-col;
+            z-index: 15;
+            pointer-events: none; /* Para que los clicks pasen al canvas si fuera necesario */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .arena-overlay-left { left: 20px; border-left: 2px solid var(--cyan); }
+        .arena-overlay-right { right: 20px; border-right: 2px solid var(--gold); }
+
         #start-match-overlay, #end-match-overlay {
             position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
             z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px;
+            pointer-events: auto; /* Estos sí necesitan recibir clicks */
         }
         #end-match-overlay { display: none; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); }
 
@@ -159,7 +183,6 @@
                 const ttsCheckbox = document.getElementById('tts-enabled');
                 if(ttsCheckbox) ttsCheckbox.checked = false; 
 
-                // --- OVERLAY: ARENA ---
                 if (overlayType === 'arena') {
                     const viewGame = document.getElementById('view-game');
                     viewGame.style.display = 'block';
@@ -178,7 +201,6 @@
                     const copyBtnArena = document.getElementById('btn-copy-arena');
                     if(copyBtnArena) copyBtnArena.style.display = 'none';
                 } 
-                // --- OVERLAY: WIDGETS ---
                 else if (['chat', 'gifts', 'likes', 'donators'].includes(overlayType)) {
                     const widgetContainer = document.createElement('div');
                     widgetContainer.className = 'w-full h-full p-4 flex flex-col justify-start overflow-hidden bg-transparent';
@@ -188,7 +210,6 @@
                     if (overlayType === 'chat') targetId = 'chat-container';
                     if (overlayType === 'gifts') targetId = 'gift-container';
                     if (overlayType === 'likes') targetId = 'ranking-container';
-                    if (overlayType === 'donators') targetId = 'donators-container';
                     
                     const targetEl = document.getElementById(targetId);
                     if(targetEl) {
@@ -274,7 +295,6 @@
         </div>
 
         <div class="col-span-1 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
             <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div class="p-3 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-purple-400 flex justify-between items-center">
                     <span class="flex items-center"><i data-lucide="message-square" class="inline w-3 mr-1"></i> CHAT</span> 
@@ -302,11 +322,9 @@
             <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div class="p-3 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-yellow-500 flex justify-between items-center">
                     <span class="flex items-center"><i data-lucide="award" class="inline w-3 mr-1"></i> TOP DONADORES</span> 
-                    <button onclick="copyOverlayUrl('donators')" class="btn-copy-link" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
                 </div>
-                <div id="donators-container" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+                <div id="dashboard-donators-container" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
             </div>
-
         </div>
 
         <div class="col-span-1 lg:col-span-3 flex flex-col gap-6">
@@ -338,24 +356,42 @@
     </main>
 
     <main id="view-game" class="hidden max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px]">
+        
         <div id="main-arena-container" class="col-span-1 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group h-[500px] lg:h-auto">
             <div class="absolute inset-0 border-2 border-cyan-500/20 rounded-xl pointer-events-none z-10 group-hover:border-cyan-500/50 transition-colors"></div>
             
             <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
                 <span class="bg-black/80 text-cyan-400 text-[10px] font-black px-3 py-1.5 rounded-full border border-cyan-500/30 tracking-widest uppercase shadow-[0_0_10px_rgba(0,255,255,0.2)]">Arena Activa</span>
-                <button id="btn-copy-arena" onclick="copyOverlayUrl('arena')" class="btn-copy-link flex items-center justify-center bg-black/80" title="Copiar URL para OBS">
+                <button id="btn-copy-arena" onclick="copyOverlayUrl('arena')" class="btn-copy-link flex items-center justify-center bg-black/80 pointer-events-auto" title="Copiar URL para OBS">
                     <i data-lucide="link" class="w-3 h-3"></i>
                 </button>
             </div>
             
             <div class="flex-1 w-full h-full relative" id="canvas-wrapper">
+                
                 <div id="arena-timer" class="text-4xl md:text-5xl lg:text-6xl">03:00</div>
+                
+                <div class="arena-overlay-panel arena-overlay-left hidden md:flex">
+                    <div class="p-3 border-b border-zinc-800 bg-black/60 flex justify-between items-center">
+                        <h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-xs"><i data-lucide="crosshair" class="inline w-3 mr-1 pb-0.5"></i> Top Dominantes</h2>
+                        <span id="player-count" class="text-[9px] text-zinc-400 font-mono">0</span>
+                    </div>
+                    <div id="arena-ranking" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                </div>
+
+                <div class="arena-overlay-panel arena-overlay-right hidden md:flex">
+                    <div class="p-3 border-b border-zinc-800 bg-black/60 flex justify-between items-center">
+                        <h2 class="text-yellow-400 font-black uppercase tracking-widest italic text-xs"><i data-lucide="award" class="inline w-3 mr-1 pb-0.5"></i> Top Donadores</h2>
+                    </div>
+                    <div id="arena-donators" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                </div>
+
                 <canvas id="game-canvas"></canvas>
                 
                 <div id="start-match-overlay" class="p-4 text-center">
                     <h2 class="text-2xl md:text-4xl font-black italic text-white mb-2 uppercase tracking-widest">Sala de Espera</h2>
                     <p class="text-cyan-400 mb-8 uppercase text-[10px] md:text-xs tracking-[2px] md:tracking-[5px] font-bold">Las bolas no se hacen daño aún</p>
-                    <button id="btn-start-match" onclick="startMatch()" class="btn-start px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-xl md:text-3xl uppercase tracking-widest cursor-pointer">Iniciar Batalla</button>
+                    <button id="btn-start-match" onclick="startMatch()" class="btn-start px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-xl md:text-3xl uppercase tracking-widest cursor-pointer pointer-events-auto">Iniciar Batalla</button>
                 </div>
                 
                 <div id="end-match-overlay" class="p-4 text-center">
@@ -372,11 +408,11 @@
                 <i data-lucide="stop-circle" class="w-5 h-5"></i> Finalizar Batalla
             </button>
 
-            <div class="glass flex-1 flex flex-col overflow-hidden relative min-h-[300px] lg:min-h-0">
+            <div class="glass flex-1 flex flex-col overflow-hidden relative min-h-[300px] lg:hidden">
                 <div class="p-4 border-b border-zinc-900 bg-gradient-to-r from-black/60 to-transparent flex justify-between items-center z-10">
-                    <h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-sm"><i data-lucide="crown" class="inline w-4 mr-1 pb-1"></i> Top Dominantes</h2><span id="player-count" class="text-[10px] text-zinc-500 font-mono">0 Luchadores</span>
+                    <h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-sm"><i data-lucide="crown" class="inline w-4 mr-1 pb-1"></i> Top Dominantes</h2>
                 </div>
-                <div id="arena-ranking" class="flex-1 overflow-y-auto p-2 space-y-1 relative z-10"></div>
+                <div id="arena-ranking-mobile" class="flex-1 overflow-y-auto p-2 space-y-1 relative z-10"></div>
             </div>
 
             <div class="glass p-5 h-auto flex flex-col gap-3">
@@ -395,11 +431,9 @@
         const socket = io();
         lucide.createIcons();
         
-        // MAPA PARA GUARDAR EL PODER TOTAL APORTADO POR DONADORES
         const donatorsMap = new Map();
         const giftersSet = new Set();
 
-        // --- SISTEMA DE COPIAR URL PARA OBS ---
         function copyOverlayUrl(type) {
             const url = window.location.origin + '/?overlay=' + type;
             navigator.clipboard.writeText(url).then(() => {
@@ -409,7 +443,6 @@
             });
         }
 
-        // --- SISTEMA TTS Y VOLUMEN ---
         const synth = window.speechSynthesis;
         let voices = [];
         function loadVoices() {
@@ -515,7 +548,6 @@
 
         socket.on("status", (status) => {
             if(isOverlay) return; 
-            
             document.getElementById('loader').style.display = 'none';
             const sText = document.getElementById('connection-status');
             const sPulse = document.getElementById('status-pulse');
@@ -570,10 +602,8 @@
                 const prevForceEnd = arenaCfg.forceEnd;
                 Object.assign(arenaCfg, cfg);
                 if(gameState === 'waiting') updateLobbyTimer();
-                
-                // Si el host pulsó Finalizar Manualmente, ejecutamos endMatch en OBS
-                if(arenaCfg.forceEnd && arenaCfg.forceEnd !== prevForceEnd) {
-                    if(gameState === 'playing') endMatch();
+                if(arenaCfg.forceEnd && arenaCfg.forceEnd !== prevForceEnd && gameState === 'playing') {
+                    endMatch();
                 }
             }
         });
@@ -599,12 +629,11 @@
             updateLobbyTimer();
             balls.clear(); 
             floatingTexts.length = 0;
-            if(!isOverlay) updateUILeaderboard();
+            updateUILeaderboard();
         }
 
         function startMatch(emitEvent = true) {
             if(emitEvent && !isOverlay) socket.emit("syncStartMatch");
-            
             gameState = 'playing';
             timeRemaining = arenaCfg.matchTimeMin * 60;
             const ovStart = document.getElementById('start-match-overlay'); if(ovStart) ovStart.style.display = 'none';
@@ -620,11 +649,10 @@
             }, 1000);
         }
 
-        // --- BOTÓN MANUAL PARA FINALIZAR LA BATALLA ---
         function endMatchManual() {
             if(gameState === 'playing') {
                 if(!isOverlay) {
-                    arenaCfg.forceEnd = Date.now(); // Cambiamos esto para que OBS lo detecte
+                    arenaCfg.forceEnd = Date.now(); 
                     broadcastConfig();
                 }
                 endMatch();
@@ -666,7 +694,6 @@
             const container = document.getElementById('top-3-container');
             if(container) {
                 container.innerHTML = '';
-                
                 const medals = ['top-1', 'top-2', 'top-3'];
                 const colors = ['#FFD700', '#C0C0C0', '#CD7F32'];
                 const labels = ['ORO', 'PLATA', 'BRONCE'];
@@ -825,46 +852,59 @@
             }
             if (gameState === 'playing') deadBalls.forEach(user => balls.delete(user));
             resolveCollisions(); 
-            if(!isOverlay) updateUILeaderboard();
+            updateUILeaderboard();
             drawFloatingTexts(ctx); requestAnimationFrame(gameLoop);
         }
         
         requestAnimationFrame(gameLoop);
         showStartScreen();
 
+        // --- ACTUALIZA EL RANKING DE LA ARENA (PANEL INTERNO Y DASHBOARD) ---
         function updateUILeaderboard() {
             const pc = document.getElementById('player-count');
-            if(pc) pc.innerText = `${balls.size} Luchadores`;
+            if(pc) pc.innerText = `${balls.size}`;
+            
             const sorted = Array.from(balls.values()).sort((a, b) => b.power - a.power).slice(0, 10);
-            const container = document.getElementById('arena-ranking');
-            if(container) {
-                container.innerHTML = sorted.map((b, i) => `
-                    <div class="flex items-center justify-between bg-black/40 p-2 rounded border border-zinc-800 ${i===0 ? 'border-cyan-500/50 bg-cyan-900/10' : ''}">
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="font-black ${i===0 ? 'text-cyan-400 text-lg' : 'text-zinc-500'}">${i===0 ? '👑' : '#'+(i+1)}</span>
-                            <div class="w-2 h-2 rounded-full" style="background-color: ${b.color}"></div>
-                            <span class="font-bold text-white truncate max-w-[100px]">${b.username}</span>
-                        </div>
-                        <span class="text-xs font-mono font-bold ${b.isFurious ? 'text-purple-400 animate-pulse' : 'text-green-400'}">${Math.floor(b.power)} pts</span>
+            const htmlContent = sorted.map((b, i) => `
+                <div class="flex items-center justify-between bg-black/40 p-2 rounded border border-zinc-800 ${i===0 ? 'border-cyan-500/50 bg-cyan-900/10' : ''}">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="font-black ${i===0 ? 'text-cyan-400 text-lg' : 'text-zinc-500'}">${i===0 ? '👑' : '#'+(i+1)}</span>
+                        <div class="w-2 h-2 rounded-full" style="background-color: ${b.color}"></div>
+                        <span class="font-bold text-white truncate max-w-[80px] md:max-w-[100px]">${b.username}</span>
                     </div>
-                `).join('');
-            }
-        }
-
-        // --- ACTUALIZAR TABLA TOP DONADORES ---
-        function updateDonatorsRanking() {
-            const container = document.getElementById('donators-container');
-            if(!container) return;
-            const sorted = Array.from(donatorsMap.entries()).sort((a,b) => b[1] - a[1]).slice(0, 10);
-            container.innerHTML = sorted.map((d, i) => `
-                <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-yellow-500/20 hover:border-yellow-500/50 transition-colors">
-                    <div class="flex items-center gap-3 text-xs">
-                        <span class="text-yellow-500 font-black text-sm">${i === 0 ? '👑' : '#' + (i+1)}</span>
-                        <span class="font-bold text-zinc-300 truncate max-w-[100px]">${d[0]}</span>
-                    </div>
-                    <span class="text-yellow-400 font-mono text-[11px] bg-yellow-500/10 px-2 py-1 rounded font-bold">${Math.floor(d[1])} pts</span>
+                    <span class="text-[10px] md:text-xs font-mono font-bold ${b.isFurious ? 'text-purple-400 animate-pulse' : 'text-green-400'}">${Math.floor(b.power)} pts</span>
                 </div>
             `).join('');
+
+            const containerArena = document.getElementById('arena-ranking');
+            if(containerArena) containerArena.innerHTML = htmlContent;
+            
+            const containerMobile = document.getElementById('arena-ranking-mobile');
+            if(containerMobile) containerMobile.innerHTML = htmlContent;
+        }
+
+        // --- ACTUALIZAR TABLA TOP DONADORES (PANEL INTERNO Y DASHBOARD) ---
+        function updateDonatorsRanking() {
+            const sorted = Array.from(donatorsMap.entries()).sort((a,b) => b[1] - a[1]).slice(0, 10);
+            const htmlContent = sorted.map((d, i) => `
+                <div class="flex items-center justify-between bg-black/40 p-2 rounded border border-yellow-500/20 ${i===0 ? 'border-yellow-500/50 bg-yellow-900/10' : ''}">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="text-yellow-500 font-black ${i===0 ? 'text-lg' : 'text-sm'}">${i === 0 ? '👑' : '#' + (i+1)}</span>
+                        <span class="font-bold text-zinc-300 truncate max-w-[80px] md:max-w-[100px]">${d[0]}</span>
+                    </div>
+                    <span class="text-yellow-400 font-mono text-[10px] md:text-[11px] bg-yellow-500/10 px-2 py-1 rounded font-bold">${Math.floor(d[1])} pts</span>
+                </div>
+            `).join('');
+
+            // Actualizar en el dashboard general
+            const dashContainer = document.getElementById('dashboard-donators-container');
+            if(dashContainer) dashContainer.innerHTML = htmlContent;
+            // Actualizar en el overlay de la arena (si es que la URL es ?overlay=donators también usa este)
+            const donatorsContainer = document.getElementById('donators-container');
+            if(donatorsContainer) donatorsContainer.innerHTML = htmlContent;
+            // Actualizar el panel lateral de la arena
+            const arenaDonators = document.getElementById('arena-donators');
+            if(arenaDonators) arenaDonators.innerHTML = htmlContent;
         }
 
         function checkVoicePermission(data) {
@@ -948,10 +988,8 @@
 
         socket.on("gift", (data) => {
             giftersSet.add(data.user);
-            
             const powerAdded = data.amount * arenaCfg.giftMultiplier;
             
-            // Actualizar tabla de donadores
             donatorsMap.set(data.user, (donatorsMap.get(data.user) || 0) + powerAdded);
             updateDonatorsRanking();
             
