@@ -103,7 +103,7 @@
         }
         .cfg-input:focus { border-color: var(--cyan); }
 
-        /* CANVAS ARENA */
+        /* CANVAS ARENA Y CRONÓMETRO */
         #game-canvas {
             width: 100%; height: 100%;
             display: block;
@@ -111,6 +111,42 @@
             box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
             background: radial-gradient(circle at center, #111 0%, #000 100%);
         }
+
+        #arena-timer {
+            position: absolute;
+            top: 20px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--cyan);
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            z-index: 20;
+            pointer-events: none;
+            line-height: 1;
+        }
+
+        /* OVERLAY DE VICTORIA */
+        #end-match-overlay {
+            position: absolute; inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 30;
+            display: none; /* Oculto por defecto */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .top-winner {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 100%);
+            border: 1px solid;
+            transition: transform 0.3s;
+        }
+        .top-winner:hover { transform: scale(1.02); }
+        .top-1 { border-color: #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+        .top-2 { border-color: #C0C0C0; box-shadow: 0 0 15px rgba(192, 192, 192, 0.1); }
+        .top-3 { border-color: #CD7F32; box-shadow: 0 0 10px rgba(205, 127, 50, 0.1); }
 
         @keyframes spin { to { transform: rotate(360deg); } }
         ::-webkit-scrollbar { width: 4px; }
@@ -222,11 +258,27 @@
         
         <div class="col-span-12 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group">
             <div class="absolute inset-0 border-2 border-cyan-500/20 rounded-xl pointer-events-none z-10 group-hover:border-cyan-500/50 transition-colors"></div>
+            
             <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
                 <span class="bg-black/80 text-cyan-400 text-[10px] font-black px-3 py-1 rounded-full border border-cyan-500/30 tracking-widest uppercase shadow-[0_0_10px_rgba(0,255,255,0.2)]">Arena Activa</span>
             </div>
+
             <div class="flex-1 w-full h-full relative" id="canvas-wrapper">
+                <div id="arena-timer">03:00</div>
+                
                 <canvas id="game-canvas"></canvas>
+
+                <div id="end-match-overlay">
+                    <h2 class="text-6xl font-black italic text-cyan-400 mb-8 uppercase tracking-widest" style="text-shadow: 0 0 30px rgba(0,255,255,0.4);">¡FIN DE LA RONDA!</h2>
+                    
+                    <div id="top-3-container" class="flex flex-col gap-4 mb-10 w-full max-w-2xl">
+                        </div>
+
+                    <div class="flex flex-col items-center">
+                        <p class="text-xl text-zinc-400 font-bold uppercase tracking-widest">Iniciando nueva batalla en</p>
+                        <span id="restart-countdown" class="text-red-500 text-6xl font-black mt-2 drop-shadow-lg">5</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -237,8 +289,7 @@
                     <h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-sm"><i data-lucide="crown" class="inline w-4 mr-1 pb-1"></i> Top Dominantes</h2>
                     <span id="player-count" class="text-[10px] text-zinc-500 font-mono">0 Luchadores</span>
                 </div>
-                <div id="arena-ranking" class="flex-1 overflow-y-auto p-2 space-y-1 relative z-10">
-                    </div>
+                <div id="arena-ranking" class="flex-1 overflow-y-auto p-2 space-y-1 relative z-10"></div>
             </div>
 
             <div class="glass p-5 h-auto flex flex-col gap-3">
@@ -246,6 +297,11 @@
                     <i data-lucide="sliders" class="inline w-3 mr-1"></i> Ajustes de la Arena
                 </h2>
                 
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] text-cyan-400 uppercase font-black" title="Minutos que dura cada ronda">Tiempo (Minutos)</span>
+                    <input type="number" id="cfg-time" value="3" min="1" max="60" class="cfg-input border-cyan-500 bg-cyan-900/20 text-white text-sm">
+                </div>
+
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold" title="Poder con el que entra un nuevo jugador">Poder Inicial</span>
                     <input type="number" id="cfg-init" value="50" min="10" class="cfg-input">
@@ -377,7 +433,7 @@
                 sPulse.className = "w-2 h-2 rounded-full bg-cyan-400 animate-ping";
                 document.getElementById('btn-connect').classList.add('hidden');
                 document.getElementById('btn-disconnect').classList.remove('hidden');
-                speak("Sistemas en línea.");
+                speak("Sistemas en línea. Arena abierta.");
                 socket.emit("getActions", document.getElementById('username').value);
             } else {
                 sText.innerText = "OFFLINE"; sText.className = "text-[10px] uppercase tracking-[3px] text-red-500 font-bold italic";
@@ -389,16 +445,16 @@
 
 
         /* ==========================================================================
-           💥 MOTOR DE FÍSICAS Y FOTOS DE PERFIL (AVATARES) 💥
+           💥 MOTOR DE FÍSICAS, SISTEMA DE PARTIDAS Y AVATARES 💥
            ========================================================================== */
         
-        // Objeto de Configuración Dinámica
         const arenaCfg = {
             initialPower: 50,
             baseSpeed: 4,
             stealPercent: 0.05,
             giftMultiplier: 100,
-            furyTimeSec: 10
+            furyTimeSec: 10,
+            matchTimeMin: 3 // Minutos por defecto
         };
 
         // Escuchar cambios en los inputs UI
@@ -407,6 +463,101 @@
         document.getElementById('cfg-steal').oninput = e => arenaCfg.stealPercent = Number(e.target.value) / 100;
         document.getElementById('cfg-gift').oninput = e => arenaCfg.giftMultiplier = Number(e.target.value);
         document.getElementById('cfg-fury-time').oninput = e => arenaCfg.furyTimeSec = Number(e.target.value);
+        document.getElementById('cfg-time').oninput = e => arenaCfg.matchTimeMin = Number(e.target.value);
+
+        // --- SISTEMA DE ESTADO DE PARTIDA Y CRONÓMETRO ---
+        let gameState = 'playing'; // 'playing', 'ended'
+        let timeRemaining = arenaCfg.matchTimeMin * 60; 
+        let matchInterval;
+
+        function startMatch() {
+            gameState = 'playing';
+            timeRemaining = arenaCfg.matchTimeMin * 60;
+            balls.clear(); // Limpiar jugadores de la ronda anterior
+            floatingTexts.length = 0;
+            document.getElementById('end-match-overlay').style.display = 'none';
+            updateTimerDisplay();
+            
+            clearInterval(matchInterval);
+            matchInterval = setInterval(() => {
+                if (gameState === 'playing') {
+                    timeRemaining--;
+                    updateTimerDisplay();
+                    if (timeRemaining <= 0) {
+                        endMatch();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+            const s = (timeRemaining % 60).toString().padStart(2, '0');
+            const timerEl = document.getElementById('arena-timer');
+            timerEl.innerText = `${m}:${s}`;
+
+            if (timeRemaining <= 10 && timeRemaining > 0) {
+                timerEl.style.color = '#FF3131';
+                timerEl.style.textShadow = '0 0 30px rgba(255, 49, 49, 0.9)';
+                timerEl.classList.add('animate-pulse');
+            } else {
+                timerEl.style.color = 'var(--cyan)';
+                timerEl.style.textShadow = '0 0 20px rgba(0, 255, 255, 0.5)';
+                timerEl.classList.remove('animate-pulse');
+            }
+        }
+
+        function endMatch() {
+            gameState = 'ended';
+            clearInterval(matchInterval);
+            
+            // Sonido de victoria opcional
+            speak("Partida terminada. Mostrando el top tres.");
+            
+            // Calcular el Top 3 final
+            const sorted = Array.from(balls.values()).sort((a, b) => b.power - a.power).slice(0, 3);
+            const container = document.getElementById('top-3-container');
+            container.innerHTML = '';
+            
+            const medals = ['top-1', 'top-2', 'top-3'];
+            const colors = ['#FFD700', '#C0C0C0', '#CD7F32'];
+            const labels = ['ORO', 'PLATA', 'BRONCE'];
+            
+            if (sorted.length === 0) {
+                container.innerHTML = '<p class="text-center text-zinc-400 italic text-2xl">La arena quedó vacía...</p>';
+            } else {
+                sorted.forEach((b, i) => {
+                    const avatarSrc = b.avatarLoaded ? b.avatar.src : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(b.username)}`;
+                    container.innerHTML += `
+                        <div class="top-winner ${medals[i]} flex items-center justify-between p-4 rounded-xl">
+                            <div class="flex items-center gap-6">
+                                <div class="flex flex-col items-center justify-center w-12">
+                                    <span class="text-4xl font-black leading-none" style="color: ${colors[i]}">#${i+1}</span>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest mt-1" style="color: ${colors[i]}">${labels[i]}</span>
+                                </div>
+                                <img src="${avatarSrc}" class="w-16 h-16 rounded-full border-4" style="border-color: ${colors[i]}">
+                                <span class="text-3xl font-bold text-white truncate max-w-[200px]">${b.username}</span>
+                            </div>
+                            <span class="text-4xl font-black text-green-400 drop-shadow-md">${Math.floor(b.power)} <span class="text-xl">pts</span></span>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('end-match-overlay').style.display = 'flex';
+            
+            // Contador de reinicio
+            let restartTimer = 5;
+            document.getElementById('restart-countdown').innerText = restartTimer;
+            const restartInterval = setInterval(() => {
+                restartTimer--;
+                document.getElementById('restart-countdown').innerText = restartTimer;
+                if (restartTimer <= 0) {
+                    clearInterval(restartInterval);
+                    startMatch(); // ¡Nueva Ronda!
+                }
+            }, 1000);
+        }
 
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
@@ -419,7 +570,7 @@
         const COLORS = ['#00FFFF', '#FF00FF', '#39FF14', '#FF3131', '#FFD700', '#FF8C00', '#8A2BE2'];
         const MIN_POWER = 10;
         const BASE_RADIUS = 20;
-        const MAX_RADIUS = 150; // Aumentado para que crezcan más
+        const MAX_RADIUS = 150;
 
         function resizeCanvas() {
             width = wrapper.clientWidth; height = wrapper.clientHeight;
@@ -429,7 +580,6 @@
         resizeCanvas();
 
         class Ball {
-            // AHORA RECIBE EL AVATAR URL
             constructor(username, avatarUrl) {
                 this.username = username;
                 this.power = arenaCfg.initialPower; 
@@ -444,7 +594,6 @@
                 this.isFurious = false;
                 this.furyTimer = 0;
 
-                // Cargar Imagen de Perfil real usando el Proxy
                 this.avatar = new Image();
                 this.avatar.crossOrigin = "Anonymous";
                 this.avatarLoaded = false;
@@ -459,7 +608,6 @@
             }
 
             calculateRadius() {
-                // Ahora usamos Raíz Cuadrada, el crecimiento es MUCHO más notable con los puntos altos
                 let r = BASE_RADIUS + Math.sqrt(Math.max(0, this.power)) * 2;
                 if(this.isFurious) r += 20;
                 return Math.min(r, MAX_RADIUS);
@@ -508,21 +656,18 @@
                 ctx.shadowBlur = this.isFurious ? 30 : 15;
                 ctx.shadowColor = this.isFurious ? '#FFFFFF' : this.color;
                 
-                // Fondo de la bola
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 ctx.fillStyle = this.color;
                 ctx.fill();
 
-                // Dibujar Imagen (Recortada en círculo)
                 if (this.avatarLoaded) {
                     ctx.save();
-                    ctx.clip(); // Restringe lo siguiente al círculo
+                    ctx.clip();
                     ctx.drawImage(this.avatar, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
                     ctx.restore();
                 }
                 
-                // Bordes para que no se pierda la forma
                 ctx.shadowBlur = 0; 
                 ctx.lineWidth = 4; 
                 ctx.strokeStyle = 'rgba(0,0,0,0.5)'; 
@@ -532,12 +677,10 @@
                 ctx.strokeStyle = this.isFurious ? '#FFF' : this.color; 
                 ctx.stroke();
 
-                // Cartelito oscuro para que el texto sea siempre legible
                 const displayUser = this.username.length > 10 ? this.username.substring(0,10) + '..' : this.username;
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
                 ctx.beginPath();
-                // Dibujar rectángulo redondeado bajo la bola
                 if(ctx.roundRect) {
                     ctx.roundRect(this.x - 45, this.y + this.radius + 4, 90, 32, 6);
                 } else {
@@ -545,7 +688,6 @@
                 }
                 ctx.fill();
 
-                // Textos de Nombre y Poder
                 ctx.fillStyle = '#FFF'; 
                 ctx.font = 'bold 11px Rajdhani'; 
                 ctx.textAlign = 'center';
@@ -578,7 +720,6 @@
                         b1.vx -= p * b2.radius * nx; b1.vy -= p * b2.radius * ny;
                         b2.vx += p * b1.radius * nx; b2.vy += p * b1.radius * ny;
 
-                        // Combate usando configuración en vivo
                         if (Math.abs(b1.power - b2.power) > 5) {
                             let winner, loser;
                             if (b1.power > b2.power) { winner = b1; loser = b2; } else { winner = b2; loser = b1; }
@@ -617,17 +758,29 @@
             const deltaTime = timestamp - lastTime; lastTime = timestamp;
             ctx.clearRect(0, 0, width, height);
 
+            // Actualizamos las bolas siempre, incluso si la partida acabó (efecto de fondo)
             const deadBalls = [];
             for (const [username, ball] of balls.entries()) {
                 ball.update(deltaTime); ball.draw(ctx);
-                if (ball.power < MIN_POWER) { deadBalls.push(username); spawnFloatingText(ball.x, ball.y, "¡ELIMINADO!", "#FF0000"); }
+                if (ball.power < MIN_POWER && gameState === 'playing') { 
+                    deadBalls.push(username); 
+                    spawnFloatingText(ball.x, ball.y, "¡ELIMINADO!", "#FF0000"); 
+                }
             }
-            deadBalls.forEach(user => balls.delete(user));
-
-            resolveCollisions(); drawFloatingTexts(ctx); updateUILeaderboard();
+            
+            if (gameState === 'playing') {
+                deadBalls.forEach(user => balls.delete(user));
+                resolveCollisions(); 
+                updateUILeaderboard();
+            }
+            
+            drawFloatingTexts(ctx); 
             requestAnimationFrame(gameLoop);
         }
+        
+        // Iniciar el ciclo de dibujo de inmediato, y la partida lógica
         requestAnimationFrame(gameLoop);
+        startMatch();
 
         function updateUILeaderboard() {
             document.getElementById('player-count').innerText = `${balls.size} Luchadores`;
@@ -644,13 +797,16 @@
             `).join('');
         }
 
-        // AHORA RECIBE EL AVATAR URL
+        // --- MANEJO DE ENTRADAS ---
         function handleUserInteraction(username, powerToAdd, avatarUrl) {
+            // Ignorar interacciones si la partida ha terminado (se están mostrando los ganadores)
+            if (gameState !== 'playing') return;
+
             if (!balls.has(username)) balls.set(username, new Ball(username, avatarUrl));
             balls.get(username).addPower(powerToAdd);
         }
 
-        // --- EVENTOS SOCKET RESTAURADOS Y CONECTADOS AL JUEGO ---
+        // --- EVENTOS SOCKET ---
         
         socket.on("actionsUpdated", (actions) => {
             document.getElementById('actions-list').innerHTML = actions.map((a, i) => `
@@ -670,14 +826,11 @@
             audio.play();
         });
 
-        // NUEVO: Recibe un Like individual con foto
         socket.on("singleLike", (data) => {
             handleUserInteraction(data.user, 2, data.avatar); 
         });
 
-        socket.on("likeRanking", (ranking) => {
-            // Este se mantiene solo para dashboard u otros usos
-        });
+        socket.on("likeRanking", (ranking) => {});
 
         socket.on("chat", (data) => {
             const div = document.createElement('div');
@@ -704,12 +857,15 @@
             handleUserInteraction(data.user, powerAdded, data.avatar); 
             
             const ball = balls.get(data.user);
-            if(ball) {
+            if(ball && gameState === 'playing') {
                 ball.triggerFury(arenaCfg.furyTimeSec * 1000); 
                 spawnFloatingText(ball.x, ball.y, "¡FURIA!", "#8A2BE2");
             }
         });
 
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
