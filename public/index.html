@@ -87,6 +87,22 @@
         .mode-btn.active { background: var(--purple); color: white; }
         .mode-btn.active.webhook-active { background: var(--cyan); color: black; }
 
+        /* INPUTS CONFIG ARENA */
+        .cfg-input {
+            width: 60px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            text-align: center;
+            color: var(--cyan);
+            font-weight: bold;
+            font-size: 12px;
+            outline: none;
+            padding: 4px;
+            transition: border-color 0.3s;
+        }
+        .cfg-input:focus { border-color: var(--cyan); }
+
         /* CANVAS ARENA */
         #game-canvas {
             width: 100%; height: 100%;
@@ -138,21 +154,17 @@
     </div>
 
     <main id="view-dashboard" class="hidden max-w-[1800px] mx-auto grid grid-cols-12 gap-6 h-[750px]">
-        
         <div class="col-span-12 lg:col-span-3 flex flex-col gap-6">
             <section class="glass p-6">
                 <h2 class="text-cyan-400 font-bold uppercase text-xs mb-4 flex items-center gap-2 italic tracking-widest"><i data-lucide="upload-cloud" class="w-4"></i> Configurar Alerta</h2>
-                
                 <div class="flex bg-black/40 p-1 rounded-lg border border-zinc-800 mb-4">
                     <button onclick="setMode('mp3')" id="mode-mp3" class="mode-btn active flex-1 py-2 text-[10px] font-bold uppercase rounded-md">Modo MP3</button>
                     <button onclick="setMode('link')" id="mode-link" class="mode-btn flex-1 py-2 text-[10px] font-bold uppercase rounded-md">Webhook Juego</button>
                 </div>
-
                 <div class="space-y-4">
                     <select id="gift-select" class="gift-selector w-full bg-black/60 border border-zinc-700 p-3 rounded-xl text-xs outline-none focus:border-cyan-500 text-zinc-300 font-bold">
                         <option value="" disabled selected>Seleccionar Regalo...</option>
                     </select>
-                    
                     <div id="container-mp3">
                         <input type="file" id="file-input" accept="audio/mpeg" class="hidden">
                         <button onclick="document.getElementById('file-input').click()" class="w-full bg-zinc-900 border border-dashed border-zinc-700 p-3 rounded-lg text-xs text-zinc-400 hover:border-cyan-500 transition-all flex flex-col items-center gap-2">
@@ -160,15 +172,12 @@
                             <span id="file-name">Seleccionar MP3...</span>
                         </button>
                     </div>
-
                     <div id="container-link" class="hidden">
                         <input id="link-input" type="text" placeholder="http://localhost:8080/comando" class="w-full bg-black/60 border border-zinc-800 p-3 rounded-lg text-xs text-cyan-400 outline-none focus:border-cyan-500 font-mono">
                     </div>
-
                     <button id="btn-save-action" class="w-full bg-white text-black font-black py-3 rounded-xl text-xs uppercase hover:bg-cyan-500 transition-all shadow-lg">Guardar y Vincular</button>
                 </div>
             </section>
-
             <section class="glass flex-1 p-6 flex flex-col overflow-hidden">
                 <h2 class="text-purple-400 font-bold uppercase text-xs mb-4 italic tracking-widest">Eventos Activos</h2>
                 <div id="actions-list" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
@@ -207,7 +216,6 @@
                 </div>
             </section>
         </div>
-
     </main>
 
     <main id="view-game" class="max-w-[1800px] mx-auto grid grid-cols-12 gap-6 h-[750px]">
@@ -223,6 +231,7 @@
         </div>
 
         <div class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+            
             <div class="glass flex-1 flex flex-col overflow-hidden relative">
                 <div class="p-4 border-b border-zinc-900 bg-gradient-to-r from-black/60 to-transparent flex justify-between items-center z-10">
                     <h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-sm"><i data-lucide="crown" class="inline w-4 mr-1 pb-1"></i> Top Dominantes</h2>
@@ -232,13 +241,35 @@
                     </div>
             </div>
 
-            <div class="glass p-4 h-[200px] flex flex-col">
-                <h2 class="text-xs font-bold uppercase text-zinc-500 italic tracking-widest mb-2"><i data-lucide="info" class="inline w-3 mr-1"></i> Reglas</h2>
-                <ul class="text-[11px] text-zinc-400 space-y-2 font-medium">
-                    <li><b class="text-green-400">Likes (Tap Tap):</b> Unes tu bola a la arena y sumas poder poco a poco.</li>
-                    <li><b class="text-purple-400">Regalos:</b> Otorgan <span class="text-white font-bold">Poder Masivo</span>, te hacen gigante y entras en modo "Furia" (veloz e imparable).</li>
-                    <li><b class="text-red-400">Combate:</b> Chocar con una bola menor le roba puntos de poder. ¡Si llegas a 0, mueres!</li>
-                </ul>
+            <div class="glass p-5 h-auto flex flex-col gap-3">
+                <h2 class="text-xs font-bold uppercase text-zinc-500 italic tracking-widest mb-2 border-b border-zinc-800 pb-2">
+                    <i data-lucide="sliders" class="inline w-3 mr-1"></i> Ajustes de la Arena
+                </h2>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-zinc-400 uppercase font-bold" title="Poder con el que entra un nuevo jugador">Poder Inicial</span>
+                    <input type="number" id="cfg-init" value="50" min="10" class="cfg-input">
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-zinc-400 uppercase font-bold" title="Velocidad general de movimiento">Velocidad Base</span>
+                    <input type="number" id="cfg-speed" value="4" min="1" max="20" class="cfg-input">
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-zinc-400 uppercase font-bold" title="Porcentaje de puntos robados al chocar (Ej: 5%)">% Robo (Choque)</span>
+                    <input type="number" id="cfg-steal" value="5" min="1" max="100" class="cfg-input">
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-purple-400 uppercase font-bold" title="Poder otorgado por cada 1 unidad de regalo">Poder x Regalo</span>
+                    <input type="number" id="cfg-gift" value="100" min="10" class="cfg-input border-purple-500/50 text-purple-400">
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-purple-400 uppercase font-bold" title="Segundos que dura el modo Furia">Duración Furia (s)</span>
+                    <input type="number" id="cfg-fury-time" value="10" min="1" class="cfg-input border-purple-500/50 text-purple-400">
+                </div>
             </div>
         </div>
     </main>
@@ -247,7 +278,7 @@
         const socket = io();
         lucide.createIcons();
 
-        // --- SISTEMA TTS Y VOLUMEN (RESTAURADO) ---
+        // --- SISTEMA TTS Y VOLUMEN ---
         const synth = window.speechSynthesis;
         let voices = [];
         function loadVoices() {
@@ -278,27 +309,17 @@
             if(tab === 'game') resizeCanvas();
         }
 
-        // --- LÓGICA DE MODOS ALERTAS (RESTAURADA) ---
+        // --- LÓGICA DE MODOS ALERTAS ---
         let currentMode = 'mp3';
         function setMode(mode) {
             currentMode = mode;
-            const btnMp3 = document.getElementById('mode-mp3');
-            const btnLink = document.getElementById('mode-link');
-            const contMp3 = document.getElementById('container-mp3');
-            const contLink = document.getElementById('container-link');
-
-            if(mode === 'mp3') {
-                btnMp3.className = "mode-btn active flex-1 py-2 text-[10px] font-bold uppercase rounded-md";
-                btnLink.className = "mode-btn flex-1 py-2 text-[10px] font-bold uppercase rounded-md";
-                contMp3.classList.remove('hidden'); contLink.classList.add('hidden');
-            } else {
-                btnMp3.className = "mode-btn flex-1 py-2 text-[10px] font-bold uppercase rounded-md";
-                btnLink.className = "mode-btn active webhook-active flex-1 py-2 text-[10px] font-bold uppercase rounded-md";
-                contMp3.classList.add('hidden'); contLink.classList.remove('hidden');
-            }
+            document.getElementById('mode-mp3').className = mode === 'mp3' ? "mode-btn active flex-1 py-2 text-[10px] font-bold uppercase rounded-md" : "mode-btn flex-1 py-2 text-[10px] font-bold uppercase rounded-md";
+            document.getElementById('mode-link').className = mode === 'link' ? "mode-btn active webhook-active flex-1 py-2 text-[10px] font-bold uppercase rounded-md" : "mode-btn flex-1 py-2 text-[10px] font-bold uppercase rounded-md";
+            document.getElementById('container-mp3').classList.toggle('hidden', mode !== 'mp3');
+            document.getElementById('container-link').classList.toggle('hidden', mode !== 'link');
         }
 
-        // --- GUARDAR EVENTOS (RESTAURADO) ---
+        // --- GUARDAR EVENTOS ---
         document.getElementById('btn-save-action').onclick = () => {
             const username = document.getElementById('username').value;
             const gift = document.getElementById('gift-select').value;
@@ -312,8 +333,7 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     socket.emit("uploadAndSave", { username, gift, fileName: file.name, fileData: e.target.result });
-                    fileInput.value = "";
-                    document.getElementById('file-name').innerText = "Seleccionar MP3...";
+                    fileInput.value = ""; document.getElementById('file-name').innerText = "Seleccionar MP3...";
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -345,9 +365,7 @@
             socket.emit("startConnection", { username, key });
         };
 
-        document.getElementById('btn-disconnect').onclick = () => {
-            socket.emit("stopConnection");
-        };
+        document.getElementById('btn-disconnect').onclick = () => { socket.emit("stopConnection"); };
 
         socket.on("status", (status) => {
             document.getElementById('loader').style.display = 'none';
@@ -359,8 +377,8 @@
                 sPulse.className = "w-2 h-2 rounded-full bg-cyan-400 animate-ping";
                 document.getElementById('btn-connect').classList.add('hidden');
                 document.getElementById('btn-disconnect').classList.remove('hidden');
-                speak("Arena de batalla Nexora conectada.");
-                socket.emit("getActions", document.getElementById('username').value); // Cargar eventos al conectar
+                speak("Sistemas en línea.");
+                socket.emit("getActions", document.getElementById('username').value);
             } else {
                 sText.innerText = "OFFLINE"; sText.className = "text-[10px] uppercase tracking-[3px] text-red-500 font-bold italic";
                 sPulse.className = "w-2 h-2 rounded-full bg-red-500";
@@ -371,9 +389,25 @@
 
 
         /* ==========================================================================
-           💥 MOTOR DE FÍSICAS Y JUEGO (VANILLA CANVAS) 💥
+           💥 MOTOR DE FÍSICAS, JUEGO Y CONFIGURACIONES EN VIVO 💥
            ========================================================================== */
         
+        // Objeto de Configuración Dinámica
+        const arenaCfg = {
+            initialPower: 50,
+            baseSpeed: 4,
+            stealPercent: 0.05,
+            giftMultiplier: 100,
+            furyTimeSec: 10
+        };
+
+        // Escuchar cambios en los inputs UI
+        document.getElementById('cfg-init').oninput = e => arenaCfg.initialPower = Number(e.target.value);
+        document.getElementById('cfg-speed').oninput = e => arenaCfg.baseSpeed = Number(e.target.value);
+        document.getElementById('cfg-steal').oninput = e => arenaCfg.stealPercent = Number(e.target.value) / 100;
+        document.getElementById('cfg-gift').oninput = e => arenaCfg.giftMultiplier = Number(e.target.value);
+        document.getElementById('cfg-fury-time').oninput = e => arenaCfg.furyTimeSec = Number(e.target.value);
+
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
         const wrapper = document.getElementById('canvas-wrapper');
@@ -397,12 +431,15 @@
         class Ball {
             constructor(username) {
                 this.username = username;
-                this.power = 50;
+                this.power = arenaCfg.initialPower; // Usa la config
                 this.radius = this.calculateRadius();
                 this.x = Math.random() * (width - this.radius * 2) + this.radius;
                 this.y = Math.random() * (height - this.radius * 2) + this.radius;
-                this.vx = (Math.random() - 0.5) * 4;
-                this.vy = (Math.random() - 0.5) * 4;
+                
+                // Velocidad usa la config
+                this.vx = (Math.random() - 0.5) * arenaCfg.baseSpeed;
+                this.vy = (Math.random() - 0.5) * arenaCfg.baseSpeed;
+                
                 this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
                 this.isFurious = false;
                 this.furyTimer = 0;
@@ -422,7 +459,7 @@
             triggerFury(durationMs) {
                 this.isFurious = true;
                 this.furyTimer = durationMs;
-                this.vx *= 2.5; this.vy *= 2.5;
+                this.vx *= 2.0; this.vy *= 2.0; // Boost temporal
                 this.radius = this.calculateRadius();
             }
 
@@ -438,10 +475,15 @@
 
                 this.vx *= 0.995; this.vy *= 0.995;
                 const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
-                if (speed < 1) { this.vx += (Math.random() - 0.5) * 0.5; this.vy += (Math.random() - 0.5) * 0.5; }
+                // Si va muy lento, darle un pequeño empujón basado en la velocidad base configurada
+                if (speed < (arenaCfg.baseSpeed * 0.2)) { 
+                    this.vx += (Math.random() - 0.5) * (arenaCfg.baseSpeed * 0.1); 
+                    this.vy += (Math.random() - 0.5) * (arenaCfg.baseSpeed * 0.1); 
+                }
 
                 this.x += this.vx; this.y += this.vy;
 
+                // Rebotes
                 if (this.x - this.radius <= 0) { this.x = this.radius; this.vx *= -1; }
                 if (this.x + this.radius >= width) { this.x = width - this.radius; this.vx *= -1; }
                 if (this.y - this.radius <= 0) { this.y = this.radius; this.vy *= -1; }
@@ -492,12 +534,14 @@
                         b1.vx -= p * b2.radius * nx; b1.vy -= p * b2.radius * ny;
                         b2.vx += p * b1.radius * nx; b2.vy += p * b1.radius * ny;
 
+                        // Combate usando configuración en vivo
                         if (Math.abs(b1.power - b2.power) > 5) {
                             let winner, loser;
                             if (b1.power > b2.power) { winner = b1; loser = b2; } else { winner = b2; loser = b1; }
 
-                            const stealPercent = winner.isFurious ? 0.15 : 0.05;
-                            const dmg = Math.max(1, Math.floor(loser.power * stealPercent));
+                            // Si está en furia, roba el doble del % configurado
+                            const currentSteal = winner.isFurious ? (arenaCfg.stealPercent * 2) : arenaCfg.stealPercent;
+                            const dmg = Math.max(1, Math.floor(loser.power * currentSteal));
                             
                             winner.addPower(dmg); loser.addPower(-dmg);
                             spawnFloatingText(winner.x, winner.y - winner.radius, `+${dmg}`, winner.color);
@@ -601,19 +645,18 @@
             div.innerHTML = `<img src="${data.image}" class="w-8 h-8 object-contain" onerror="this.src='https://via.placeholder.com/32?text=🎁'">
                              <div class="text-[10px]"><b class="text-white">${data.user}</b> x${data.amount} <span class="text-green-400">${data.gift}</span></div>`;
             document.getElementById('gift-container').prepend(div);
-            speak(`¡Increíble! ${data.user} ha enviado ${data.amount} ${data.gift}. Activando modo furia.`);
-
-            handleUserInteraction(data.user, data.amount * 100); 
+            
+            // Usar variables de configuración en lugar de números fijos
+            const powerAdded = data.amount * arenaCfg.giftMultiplier;
+            handleUserInteraction(data.user, powerAdded); 
+            
             const ball = balls.get(data.user);
             if(ball) {
-                ball.triggerFury(10000); 
+                ball.triggerFury(arenaCfg.furyTimeSec * 1000); 
                 spawnFloatingText(ball.x, ball.y, "¡FURIA!", "#8A2BE2");
             }
         });
 
-    </script>
-</body>
-</html>
     </script>
 </body>
 </html>
