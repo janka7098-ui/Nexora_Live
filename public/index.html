@@ -70,6 +70,10 @@
             transform: translateX(-50%); width: 40px; height: 10px;
             background: var(--cyan); filter: blur(8px); border-radius: 50%;
         }
+        .tab-btn.active-race {
+            border-color: var(--red); color: white; background: rgba(255, 49, 49, 0.05);
+        }
+        .tab-btn.active-race::after { background: var(--red); }
 
         .gift-selector {
             appearance: none;
@@ -87,52 +91,45 @@
             font-weight: bold; font-size: 12px; outline: none; padding: 4px; transition: border-color 0.3s;
         }
         .cfg-input:focus { border-color: var(--cyan); }
+        .cfg-input-red { color: var(--red); }
+        .cfg-input-red:focus { border-color: var(--red); }
 
-        #game-canvas {
+        #game-canvas, #race-canvas {
             width: 100%; height: 100%; display: block; border-radius: 12px;
             box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
             background: radial-gradient(circle at center, #111 0%, #000 100%);
         }
 
-        #arena-timer {
+        #race-canvas {
+            background: linear-gradient(to bottom, #050507 0%, #1a0b2e 100%);
+        }
+
+        .game-timer {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
             font-weight: 900; color: var(--cyan); text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
             z-index: 20; pointer-events: none; line-height: 1; transition: color 0.3s;
         }
+        .race-timer { color: var(--red); text-shadow: 0 0 20px rgba(255, 49, 49, 0.5); }
 
-        /* Paneles dentro de la Arena */
         .arena-overlay-panel {
-            position: absolute;
-            top: 20px;
-            width: 250px;
-            max-height: calc(100% - 40px);
-            background: rgba(10, 10, 15, 0.7);
-            backdrop-filter: blur(8px);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            flex-col;
-            z-index: 15;
-            pointer-events: none; /* Para que los clicks pasen al canvas si fuera necesario */
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            position: absolute; top: 20px; width: 250px; max-height: calc(100% - 40px);
+            background: rgba(10, 10, 15, 0.7); backdrop-filter: blur(8px);
+            border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 15; pointer-events: none; overflow: hidden; display: flex; flex-direction: column;
         }
-        
         .arena-overlay-left { left: 20px; border-left: 2px solid var(--cyan); }
         .arena-overlay-right { right: 20px; border-right: 2px solid var(--gold); }
+        .race-overlay-left { left: 20px; border-left: 2px solid var(--red); }
 
-        #start-match-overlay, #end-match-overlay {
+        .match-overlay {
             position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
-            z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px;
-            pointer-events: auto; /* Estos sí necesitan recibir clicks */
+            z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; pointer-events: auto;
         }
-        #end-match-overlay { display: none; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); }
 
-        .btn-start {
-            background: var(--cyan); color: black; box-shadow: 0 0 30px rgba(0, 255, 255, 0.5); transition: transform 0.2s, box-shadow 0.2s;
-        }
+        .btn-start { background: var(--cyan); color: black; box-shadow: 0 0 30px rgba(0, 255, 255, 0.5); transition: all 0.2s; }
         .btn-start:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(0, 255, 255, 0.8); }
+        .btn-start-race { background: var(--red); color: white; box-shadow: 0 0 30px rgba(255, 49, 49, 0.5); }
+        .btn-start-race:hover { box-shadow: 0 0 50px rgba(255, 49, 49, 0.8); }
 
         .top-winner { background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 100%); border: 1px solid; transition: transform 0.3s; }
         .top-1 { border-color: #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
@@ -146,19 +143,11 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         
         .btn-copy-link {
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 6px;
-            border-radius: 6px;
-            color: #a1a1aa;
-            cursor: pointer;
-            transition: all 0.2s;
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); padding: 6px;
+            border-radius: 6px; color: #a1a1aa; cursor: pointer; transition: all 0.2s;
         }
-        .btn-copy-link:hover {
-            color: var(--cyan);
-            border-color: var(--cyan);
-            background: rgba(0, 255, 255, 0.1);
-        }
+        .btn-copy-link:hover { color: var(--cyan); border-color: var(--cyan); background: rgba(0, 255, 255, 0.1); }
+        .btn-copy-link-red:hover { color: var(--red); border-color: var(--red); background: rgba(255, 49, 49, 0.1); }
     </style>
 </head>
 <body class="p-2 md:p-4 pb-12">
@@ -179,28 +168,36 @@
                 document.getElementById('tabs-container').style.display = 'none';
                 document.getElementById('view-dashboard').style.display = 'none';
                 document.getElementById('view-game').style.display = 'none';
+                document.getElementById('view-race').style.display = 'none';
                 
                 const ttsCheckbox = document.getElementById('tts-enabled');
                 if(ttsCheckbox) ttsCheckbox.checked = false; 
 
+                // --- OVERLAY: ARENA ---
                 if (overlayType === 'arena') {
-                    const viewGame = document.getElementById('view-game');
-                    viewGame.style.display = 'block';
-                    viewGame.className = 'w-screen h-screen m-0 p-0 block'; 
-                    
-                    const canvasContainer = document.getElementById('main-arena-container');
-                    canvasContainer.className = 'w-full h-full relative overflow-hidden bg-transparent border-none';
-                    
-                    const glow = canvasContainer.querySelector('.absolute.inset-0');
-                    if(glow) glow.style.display = 'none';
-                    
+                    const view = document.getElementById('view-game');
+                    view.style.display = 'block'; view.className = 'w-screen h-screen m-0 p-0 block'; 
+                    const container = document.getElementById('main-arena-container');
+                    container.className = 'w-full h-full relative overflow-hidden bg-transparent border-none';
+                    const glow = container.querySelector('.absolute.inset-0'); if(glow) glow.style.display = 'none';
                     document.getElementById('game-canvas').style.background = 'transparent';
                     document.getElementById('game-canvas').style.boxShadow = 'none';
                     document.getElementById('sidebar-game').style.display = 'none';
-                    
-                    const copyBtnArena = document.getElementById('btn-copy-arena');
-                    if(copyBtnArena) copyBtnArena.style.display = 'none';
+                    const copyBtn = document.getElementById('btn-copy-arena'); if(copyBtn) copyBtn.style.display = 'none';
                 } 
+                // --- OVERLAY: CARRERA DE LA MUERTE ---
+                else if (overlayType === 'race') {
+                    const view = document.getElementById('view-race');
+                    view.style.display = 'block'; view.className = 'w-screen h-screen m-0 p-0 block'; 
+                    const container = document.getElementById('main-race-container');
+                    container.className = 'w-full h-full relative overflow-hidden bg-transparent border-none';
+                    const glow = container.querySelector('.absolute.inset-0'); if(glow) glow.style.display = 'none';
+                    document.getElementById('race-canvas').style.background = 'transparent';
+                    document.getElementById('race-canvas').style.boxShadow = 'none';
+                    document.getElementById('sidebar-race').style.display = 'none';
+                    const copyBtn = document.getElementById('btn-copy-race'); if(copyBtn) copyBtn.style.display = 'none';
+                }
+                // --- OVERLAY: WIDGETS ---
                 else if (['chat', 'gifts', 'likes', 'donators'].includes(overlayType)) {
                     const widgetContainer = document.createElement('div');
                     widgetContainer.className = 'w-full h-full p-4 flex flex-col justify-start overflow-hidden bg-transparent';
@@ -210,6 +207,7 @@
                     if (overlayType === 'chat') targetId = 'chat-container';
                     if (overlayType === 'gifts') targetId = 'gift-container';
                     if (overlayType === 'likes') targetId = 'ranking-container';
+                    if (overlayType === 'donators') targetId = 'donators-container';
                     
                     const targetEl = document.getElementById(targetId);
                     if(targetEl) {
@@ -263,12 +261,14 @@
             <i data-lucide="layout-dashboard" class="w-4 h-4 text-purple-500"></i> Dashboard Maestro
         </button>
         <button onclick="showTab('game')" id="tab-btn-game" class="tab-btn flex-1 py-3 rounded-lg flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white">
-            <i data-lucide="swords" class="w-4 h-4 text-cyan-500 animate-pulse"></i> Arena de Batalla
+            <i data-lucide="swords" class="w-4 h-4 text-cyan-500"></i> Arena de Batalla
+        </button>
+        <button onclick="showTab('race')" id="tab-btn-race" class="tab-btn flex-1 py-3 rounded-lg flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
+            <i data-lucide="skull" class="w-4 h-4 text-red-500 animate-pulse"></i> Carrera de la Muerte
         </button>
     </div>
 
     <main id="view-dashboard" class="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px]">
-        
         <div class="col-span-1 lg:col-span-3 flex flex-col gap-6">
             <section class="glass p-6">
                 <h2 class="text-cyan-400 font-bold uppercase text-xs mb-4 flex items-center gap-2 italic tracking-widest"><i data-lucide="upload-cloud" class="w-4"></i> Configurar Alerta</h2>
@@ -297,31 +297,25 @@
         <div class="col-span-1 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div class="p-3 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-purple-400 flex justify-between items-center">
-                    <span class="flex items-center"><i data-lucide="message-square" class="inline w-3 mr-1"></i> CHAT</span> 
-                    <button onclick="copyOverlayUrl('chat')" class="btn-copy-link" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
+                    <span class="flex items-center"><i data-lucide="message-square" class="inline w-3 mr-1"></i> CHAT</span> <button onclick="copyOverlayUrl('chat')" class="btn-copy-link" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
                 </div>
                 <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
             </div>
-            
             <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div class="p-3 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-green-400 flex justify-between items-center">
-                    <span class="flex items-center"><i data-lucide="gift" class="inline w-3 mr-1"></i> REGALOS</span> 
-                    <button onclick="copyOverlayUrl('gifts')" class="btn-copy-link" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
+                    <span class="flex items-center"><i data-lucide="gift" class="inline w-3 mr-1"></i> REGALOS</span> <button onclick="copyOverlayUrl('gifts')" class="btn-copy-link" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
                 </div>
                 <div id="gift-container" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
             </div>
-            
             <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div class="p-3 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-red-500 flex justify-between items-center">
-                    <span class="flex items-center"><i data-lucide="flame" class="inline w-3 mr-1"></i> TOP LIKES</span> 
-                    <button onclick="copyOverlayUrl('likes')" class="btn-copy-link" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
+                    <span class="flex items-center"><i data-lucide="flame" class="inline w-3 mr-1"></i> TOP LIKES</span> <button onclick="copyOverlayUrl('likes')" class="btn-copy-link" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
                 </div>
                 <div id="ranking-container" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
             </div>
-
             <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div class="p-3 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-yellow-500 flex justify-between items-center">
-                    <span class="flex items-center"><i data-lucide="award" class="inline w-3 mr-1"></i> TOP DONADORES</span> 
+                    <span class="flex items-center"><i data-lucide="award" class="inline w-3 mr-1"></i> TOP DONADORES</span> <button onclick="copyOverlayUrl('donators')" class="btn-copy-link" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
                 </div>
                 <div id="dashboard-donators-container" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
             </div>
@@ -356,20 +350,16 @@
     </main>
 
     <main id="view-game" class="hidden max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px]">
-        
         <div id="main-arena-container" class="col-span-1 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group h-[500px] lg:h-auto">
             <div class="absolute inset-0 border-2 border-cyan-500/20 rounded-xl pointer-events-none z-10 group-hover:border-cyan-500/50 transition-colors"></div>
             
             <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
                 <span class="bg-black/80 text-cyan-400 text-[10px] font-black px-3 py-1.5 rounded-full border border-cyan-500/30 tracking-widest uppercase shadow-[0_0_10px_rgba(0,255,255,0.2)]">Arena Activa</span>
-                <button id="btn-copy-arena" onclick="copyOverlayUrl('arena')" class="btn-copy-link flex items-center justify-center bg-black/80 pointer-events-auto" title="Copiar URL para OBS">
-                    <i data-lucide="link" class="w-3 h-3"></i>
-                </button>
+                <button id="btn-copy-arena" onclick="copyOverlayUrl('arena')" class="btn-copy-link flex items-center justify-center bg-black/80 pointer-events-auto" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
             </div>
             
             <div class="flex-1 w-full h-full relative" id="canvas-wrapper">
-                
-                <div id="arena-timer" class="text-4xl md:text-5xl lg:text-6xl">03:00</div>
+                <div id="arena-timer" class="game-timer text-4xl md:text-5xl lg:text-6xl">03:00</div>
                 
                 <div class="arena-overlay-panel arena-overlay-left hidden md:flex">
                     <div class="p-3 border-b border-zinc-800 bg-black/60 flex justify-between items-center">
@@ -388,13 +378,13 @@
 
                 <canvas id="game-canvas"></canvas>
                 
-                <div id="start-match-overlay" class="p-4 text-center">
+                <div id="start-match-overlay" class="match-overlay p-4 text-center">
                     <h2 class="text-2xl md:text-4xl font-black italic text-white mb-2 uppercase tracking-widest">Sala de Espera</h2>
                     <p class="text-cyan-400 mb-8 uppercase text-[10px] md:text-xs tracking-[2px] md:tracking-[5px] font-bold">Las bolas no se hacen daño aún</p>
-                    <button id="btn-start-match" onclick="startMatch()" class="btn-start px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-xl md:text-3xl uppercase tracking-widest cursor-pointer pointer-events-auto">Iniciar Batalla</button>
+                    <button id="btn-start-match" onclick="startMatch('arena')" class="btn-start px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-xl md:text-3xl uppercase tracking-widest cursor-pointer pointer-events-auto">Iniciar Batalla</button>
                 </div>
                 
-                <div id="end-match-overlay" class="p-4 text-center">
+                <div id="end-match-overlay" class="match-overlay p-4 text-center">
                     <h2 class="text-3xl md:text-6xl font-black italic text-cyan-400 mb-4 md:mb-8 uppercase tracking-widest" style="text-shadow: 0 0 30px rgba(0,255,255,0.4);">¡FIN DE LA RONDA!</h2>
                     <div id="top-3-container" class="flex flex-col gap-2 md:gap-4 mb-6 md:mb-10 w-full max-w-2xl"></div>
                     <div class="flex flex-col items-center"><p class="text-sm md:text-xl text-zinc-400 font-bold uppercase tracking-widest">Preparando nueva sala en</p><span id="restart-countdown" class="text-red-500 text-4xl md:text-6xl font-black mt-2 drop-shadow-lg">5</span></div>
@@ -403,26 +393,86 @@
         </div>
 
         <div id="sidebar-game" class="col-span-1 lg:col-span-3 flex flex-col gap-6">
-            
-            <button onclick="endMatchManual()" class="w-full bg-red-900/40 text-red-500 border border-red-500/50 hover:bg-red-600 hover:text-white font-black py-4 rounded-xl text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(255,0,0,0.2)]">
-                <i data-lucide="stop-circle" class="w-5 h-5"></i> Finalizar Batalla
-            </button>
-
+            <button onclick="endMatchManual('arena')" class="w-full bg-red-900/40 text-red-500 border border-red-500/50 hover:bg-red-600 hover:text-white font-black py-4 rounded-xl text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(255,0,0,0.2)]"><i data-lucide="stop-circle" class="w-5 h-5"></i> Finalizar Batalla</button>
             <div class="glass flex-1 flex flex-col overflow-hidden relative min-h-[300px] lg:hidden">
-                <div class="p-4 border-b border-zinc-900 bg-gradient-to-r from-black/60 to-transparent flex justify-between items-center z-10">
-                    <h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-sm"><i data-lucide="crown" class="inline w-4 mr-1 pb-1"></i> Top Dominantes</h2>
-                </div>
+                <div class="p-4 border-b border-zinc-900 bg-gradient-to-r from-black/60 to-transparent flex justify-between items-center z-10"><h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-sm"><i data-lucide="crown" class="inline w-4 mr-1 pb-1"></i> Top Dominantes</h2></div>
                 <div id="arena-ranking-mobile" class="flex-1 overflow-y-auto p-2 space-y-1 relative z-10"></div>
             </div>
-
             <div class="glass p-5 h-auto flex flex-col gap-3">
                 <h2 class="text-xs font-bold uppercase text-zinc-500 italic tracking-widest mb-2 border-b border-zinc-800 pb-2"><i data-lucide="sliders" class="inline w-3 mr-1"></i> Ajustes de la Arena</h2>
-                <div class="flex items-center justify-between mb-2"><span class="text-[11px] text-cyan-400 uppercase font-black" title="Minutos que dura cada ronda">Tiempo (Minutos)</span><input type="number" id="cfg-time" value="3" min="1" max="60" class="cfg-input border-cyan-500 bg-cyan-900/20 text-white text-sm" onchange="updateLobbyTimer()"></div>
-                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Poder con el que entra un nuevo jugador">Poder Inicial</span><input type="number" id="cfg-init" value="50" min="10" class="cfg-input"></div>
-                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Velocidad general de movimiento">Velocidad Base</span><input type="number" id="cfg-speed" value="4" min="1" max="20" class="cfg-input"></div>
-                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Porcentaje de puntos robados al chocar (Ej: 5%)">% Robo (Choque)</span><input type="number" id="cfg-steal" value="5" min="1" max="100" class="cfg-input"></div>
-                <div class="flex items-center justify-between"><span class="text-[10px] text-purple-400 uppercase font-bold" title="Poder otorgado por cada 1 unidad de regalo">Poder x Regalo</span><input type="number" id="cfg-gift" value="100" min="10" class="cfg-input border-purple-500/50 text-purple-400"></div>
-                <div class="flex items-center justify-between"><span class="text-[10px] text-purple-400 uppercase font-bold" title="Segundos que dura el modo Furia">Duración Furia (s)</span><input type="number" id="cfg-fury-time" value="10" min="1" class="cfg-input border-purple-500/50 text-purple-400"></div>
+                <div class="flex items-center justify-between mb-2"><span class="text-[11px] text-cyan-400 uppercase font-black" title="Minutos que dura cada ronda">Tiempo (Minutos)</span><input type="number" id="cfg-time" value="3" min="1" max="60" class="cfg-input border-cyan-500 bg-cyan-900/20 text-white text-sm" onchange="updateLobbyTimer('arena')"></div>
+                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold">Poder Inicial</span><input type="number" id="cfg-init" value="50" min="10" class="cfg-input"></div>
+                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold">Velocidad Base</span><input type="number" id="cfg-speed" value="4" min="1" max="20" class="cfg-input"></div>
+                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold">% Robo (Choque)</span><input type="number" id="cfg-steal" value="5" min="1" max="100" class="cfg-input"></div>
+                <div class="flex items-center justify-between"><span class="text-[10px] text-purple-400 uppercase font-bold">Poder x Regalo</span><input type="number" id="cfg-gift" value="100" min="10" class="cfg-input border-purple-500/50 text-purple-400"></div>
+            </div>
+        </div>
+    </main>
+
+    <main id="view-race" class="hidden max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px]">
+        <div id="main-race-container" class="col-span-1 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group h-[500px] lg:h-auto border-red-500/30">
+            <div class="absolute inset-0 border-2 border-red-500/20 rounded-xl pointer-events-none z-10 group-hover:border-red-500/50 transition-colors"></div>
+            
+            <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
+                <span class="bg-black/80 text-red-500 text-[10px] font-black px-3 py-1.5 rounded-full border border-red-500/50 tracking-widest uppercase shadow-[0_0_10px_rgba(255,49,49,0.2)]"><i data-lucide="skull" class="inline w-3 mr-1 pb-0.5"></i> Carrera Activa</span>
+                <button id="btn-copy-race" onclick="copyOverlayUrl('race')" class="btn-copy-link btn-copy-link-red flex items-center justify-center bg-black/80 pointer-events-auto" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
+            </div>
+            
+            <div class="flex-1 w-full h-full relative" id="canvas-wrapper-race">
+                <div id="race-timer" class="game-timer race-timer text-4xl md:text-5xl lg:text-6xl">03:00</div>
+                
+                <div class="arena-overlay-panel race-overlay-left hidden md:flex" style="background: rgba(20, 5, 5, 0.8);">
+                    <div class="p-3 border-b border-zinc-800 bg-black/60 flex justify-between items-center">
+                        <h2 class="text-red-500 font-black uppercase tracking-widest italic text-xs"><i data-lucide="flag" class="inline w-3 mr-1 pb-0.5"></i> Posiciones</h2>
+                        <span id="race-player-count" class="text-[9px] text-zinc-400 font-mono">0</span>
+                    </div>
+                    <div id="race-ranking" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                </div>
+
+                <canvas id="race-canvas"></canvas>
+                
+                <div id="start-race-overlay" class="match-overlay p-4 text-center">
+                    <h2 class="text-3xl md:text-6xl font-black italic text-red-500 mb-2 uppercase tracking-widest drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">CARRERA DE LA MUERTE</h2>
+                    <p class="text-zinc-400 mb-8 uppercase text-[10px] md:text-xs tracking-[2px] md:tracking-[5px] font-bold">Calentando Motores en Sala de Espera</p>
+                    <button id="btn-start-race" onclick="startMatch('race')" class="btn-start btn-start-race px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-xl md:text-3xl uppercase tracking-widest cursor-pointer pointer-events-auto">Iniciar Carrera</button>
+                </div>
+                
+                <div id="end-race-overlay" class="match-overlay p-4 text-center">
+                    <h2 class="text-3xl md:text-6xl font-black italic text-red-500 mb-4 md:mb-8 uppercase tracking-widest" style="text-shadow: 0 0 30px rgba(255,49,49,0.4);">¡FIN DE LA CARRERA!</h2>
+                    <div id="top-3-race-container" class="flex flex-col gap-2 md:gap-4 mb-6 md:mb-10 w-full max-w-2xl"></div>
+                    <div class="flex flex-col items-center"><p class="text-sm md:text-xl text-zinc-400 font-bold uppercase tracking-widest">Siguiente carrera en</p><span id="restart-race-countdown" class="text-red-500 text-4xl md:text-6xl font-black mt-2 drop-shadow-lg">5</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sidebar-race" class="col-span-1 lg:col-span-3 flex flex-col gap-6">
+            <button onclick="endMatchManual('race')" class="w-full bg-red-900/40 text-red-500 border border-red-500/50 hover:bg-red-600 hover:text-white font-black py-4 rounded-xl text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(255,0,0,0.2)]"><i data-lucide="stop-circle" class="w-5 h-5"></i> Finalizar Carrera</button>
+            
+            <div class="glass flex-1 flex flex-col overflow-hidden relative min-h-[300px] lg:hidden">
+                <div class="p-4 border-b border-zinc-900 bg-gradient-to-r from-black/60 to-transparent flex justify-between items-center z-10"><h2 class="text-red-500 font-black uppercase tracking-widest italic text-sm"><i data-lucide="flag" class="inline w-4 mr-1 pb-1"></i> Posiciones</h2></div>
+                <div id="race-ranking-mobile" class="flex-1 overflow-y-auto p-2 space-y-1 relative z-10"></div>
+            </div>
+
+            <div class="glass p-5 h-auto flex flex-col gap-3 border border-red-900/30">
+                <h2 class="text-xs font-bold uppercase text-red-500 italic tracking-widest mb-2 border-b border-red-900/50 pb-2"><i data-lucide="settings-2" class="inline w-3 mr-1"></i> Controles del Motor</h2>
+                
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] text-red-400 uppercase font-black" title="Minutos que dura cada ronda">Tiempo (Min.)</span>
+                    <input type="number" id="cfg-race-time" value="3" min="1" max="60" class="cfg-input cfg-input-red border-red-500/50 bg-red-900/10 text-white text-sm" onchange="updateLobbyTimer('race')">
+                </div>
+
+                <div class="pt-2 pb-2">
+                    <label class="text-[10px] text-zinc-400 uppercase block font-bold mb-2">Modo de Entrada (Motores)</label>
+                    <select id="cfg-race-mode" class="w-full bg-black/60 border border-red-900/50 p-2 rounded-lg text-[11px] text-red-400 outline-none focus:border-red-500 font-bold uppercase tracking-wider">
+                        <option value="gifts">Solo Regalos (Turbo)</option>
+                        <option value="likes_gifts" selected>Likes y Regalos</option>
+                        <option value="all">Chat, Likes y Regalos</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Velocidad que se pierde con el tiempo">Fricción Pista</span><input type="number" id="cfg-race-friction" value="0.98" min="0.80" max="0.99" step="0.01" class="cfg-input cfg-input-red"></div>
+                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Velocidad por 1 unidad de regalo">Velocidad x Regalo</span><input type="number" id="cfg-race-gift" value="50" min="1" class="cfg-input cfg-input-red"></div>
+                <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Velocidad por Tap Tap">Velocidad x Like</span><input type="number" id="cfg-race-like" value="5" min="1" class="cfg-input cfg-input-red"></div>
             </div>
         </div>
     </main>
@@ -433,24 +483,22 @@
         
         const donatorsMap = new Map();
         const giftersSet = new Set();
+        let currentActiveGame = 'arena'; // 'arena' o 'race'
 
         function copyOverlayUrl(type) {
             const url = window.location.origin + '/?overlay=' + type;
             navigator.clipboard.writeText(url).then(() => {
                 alert('¡Enlace copiado con éxito!\n\nPega esta URL en una fuente de Navegador en OBS:\n' + url);
-            }).catch(err => {
-                alert('Hubo un error al copiar. Copia manualmente esta URL:\n' + url);
-            });
+            }).catch(err => alert('Hubo un error al copiar. Copia manualmente esta URL:\n' + url));
         }
 
+        // --- SISTEMA TTS Y VOLUMEN ---
         const synth = window.speechSynthesis;
         let voices = [];
         function loadVoices() {
             voices = synth.getVoices();
             const voiceSelect = document.getElementById('tts-voice');
-            if(voiceSelect) {
-                voiceSelect.innerHTML = voices.map((v, i) => `<option value="${i}" ${v.lang.includes('es') ? 'selected' : ''}>${v.name}</option>`).join('');
-            }
+            if(voiceSelect) voiceSelect.innerHTML = voices.map((v, i) => `<option value="${i}" ${v.lang.includes('es') ? 'selected' : ''}>${v.name}</option>`).join('');
         }
         speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
 
@@ -464,19 +512,23 @@
         }
 
         const volInput = document.getElementById('tts-volume');
-        if(volInput) {
-            volInput.oninput = (e) => {
-                document.getElementById('vol-perc').innerText = Math.round(e.target.value * 100) + "%";
-            };
-        }
+        if(volInput) volInput.oninput = (e) => document.getElementById('vol-perc').innerText = Math.round(e.target.value * 100) + "%";
 
+        // --- TABS Y VISTAS ---
         function showTab(tab) {
             if(isOverlay) return;
             document.getElementById('view-dashboard').classList.toggle('hidden', tab !== 'dashboard');
             document.getElementById('view-game').classList.toggle('hidden', tab !== 'game');
-            document.getElementById('tab-btn-dashboard').classList.toggle('active', tab === 'dashboard');
-            document.getElementById('tab-btn-game').classList.toggle('active', tab === 'game');
-            if(tab === 'game') resizeCanvas();
+            document.getElementById('view-race').classList.toggle('hidden', tab !== 'race');
+            
+            document.getElementById('tab-btn-dashboard').className = `tab-btn flex-1 py-3 rounded-lg flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white ${tab === 'dashboard' ? 'active' : ''}`;
+            document.getElementById('tab-btn-game').className = `tab-btn flex-1 py-3 rounded-lg flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white ${tab === 'game' ? 'active' : ''}`;
+            document.getElementById('tab-btn-race').className = `tab-btn flex-1 py-3 rounded-lg flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors ${tab === 'race' ? 'active-race' : ''}`;
+            
+            if(tab === 'game' || tab === 'race') {
+                currentActiveGame = tab === 'game' ? 'arena' : 'race';
+                resizeCanvas();
+            }
         }
 
         let currentMode = 'mp3';
@@ -515,21 +567,15 @@
         }
 
         const fileInput = document.getElementById('file-input');
-        if(fileInput) {
-            fileInput.onchange = (e) => {
-                document.getElementById('file-name').innerText = e.target.files[0]?.name || "Seleccionar MP3...";
-            };
-        }
-
-        function deleteAction(index) {
-            socket.emit("deleteAction", { username: document.getElementById('username').value, index });
-        }
+        if(fileInput) fileInput.onchange = (e) => document.getElementById('file-name').innerText = e.target.files[0]?.name || "Seleccionar MP3...";
+        function deleteAction(index) { socket.emit("deleteAction", { username: document.getElementById('username').value, index }); }
 
         fetch('/gift-list').then(r => r.json()).then(d => {
             const giftSelect = document.getElementById('gift-select');
             if(giftSelect) giftSelect.innerHTML += d.map(g => `<option value="${g.name}">${g.name.toUpperCase()}</option>`).join('');
         });
 
+        // --- CONEXIÓN ---
         const btnConnect = document.getElementById('btn-connect');
         if(btnConnect) {
             btnConnect.onclick = () => {
@@ -542,9 +588,7 @@
         }
 
         const btnDisconnect = document.getElementById('btn-disconnect');
-        if(btnDisconnect) {
-            btnDisconnect.onclick = () => { socket.emit("stopConnection"); };
-        }
+        if(btnDisconnect) btnDisconnect.onclick = () => { socket.emit("stopConnection"); };
 
         socket.on("status", (status) => {
             if(isOverlay) return; 
@@ -560,7 +604,7 @@
                 document.getElementById('btn-connect').classList.add('hidden');
                 document.getElementById('btn-disconnect').classList.remove('hidden');
                 hostAvatar.classList.add('border-cyan-500', 'shadow-[0_0_15px_rgba(0,255,255,0.4)]');
-                speak("Sistemas en línea. Sala de espera abierta.");
+                speak("Sistemas en línea. Listo para jugar.");
                 socket.emit("getActions", document.getElementById('username').value);
             } else {
                 sText.innerText = "OFFLINE"; sText.className = "text-[10px] uppercase tracking-[3px] text-red-500 font-bold italic";
@@ -579,191 +623,216 @@
             if(data.username) document.getElementById('host-title').innerHTML = `${data.username} <span class="text-cyan-500 text-sm md:text-lg">LIVE</span>`;
         });
 
-        // --- SISTEMA DE ARENA Y SINCRONIZACIÓN ---
+        /* ==========================================================================
+           CONFIGURACIONES GLOBALES DE JUEGOS
+           ========================================================================== */
         const arenaCfg = { initialPower: 50, baseSpeed: 4, stealPercent: 0.05, giftMultiplier: 100, furyTimeSec: 10, matchTimeMin: 3, forceEnd: 0 };
+        const raceCfg = { mode: 'likes_gifts', matchTimeMin: 3, friction: 0.98, giftMult: 50, likeMult: 5, forceEnd: 0 };
 
         function broadcastConfig() {
-            if(!isOverlay) socket.emit("syncConfig", arenaCfg);
+            if(!isOverlay) socket.emit("syncConfig", { arena: arenaCfg, race: raceCfg });
         }
 
+        // Inputs Arena
         const iInit = document.getElementById('cfg-init'); if(iInit) iInit.oninput = e => { arenaCfg.initialPower = Number(e.target.value); broadcastConfig(); };
         const iSpd = document.getElementById('cfg-speed'); if(iSpd) iSpd.oninput = e => { arenaCfg.baseSpeed = Number(e.target.value); broadcastConfig(); };
         const iStl = document.getElementById('cfg-steal'); if(iStl) iStl.oninput = e => { arenaCfg.stealPercent = Number(e.target.value) / 100; broadcastConfig(); };
         const iGft = document.getElementById('cfg-gift'); if(iGft) iGft.oninput = e => { arenaCfg.giftMultiplier = Number(e.target.value); broadcastConfig(); };
         const iFrt = document.getElementById('cfg-fury-time'); if(iFrt) iFrt.oninput = e => { arenaCfg.furyTimeSec = Number(e.target.value); broadcastConfig(); };
-        const iTme = document.getElementById('cfg-time'); if(iTme) iTme.oninput = e => {
-            arenaCfg.matchTimeMin = Number(e.target.value);
-            if(gameState === 'waiting') updateLobbyTimer();
-            broadcastConfig();
-        };
+        const iTme = document.getElementById('cfg-time'); if(iTme) iTme.oninput = e => { arenaCfg.matchTimeMin = Number(e.target.value); if(gameStateArena === 'waiting') updateLobbyTimer('arena'); broadcastConfig(); };
+
+        // Inputs Race
+        const rMod = document.getElementById('cfg-race-mode'); if(rMod) rMod.onchange = e => { raceCfg.mode = e.target.value; broadcastConfig(); };
+        const rTme = document.getElementById('cfg-race-time'); if(rTme) rTme.oninput = e => { raceCfg.matchTimeMin = Number(e.target.value); if(gameStateRace === 'waiting') updateLobbyTimer('race'); broadcastConfig(); };
+        const rFrc = document.getElementById('cfg-race-friction'); if(rFrc) rFrc.oninput = e => { raceCfg.friction = Number(e.target.value); broadcastConfig(); };
+        const rGft = document.getElementById('cfg-race-gift'); if(rGft) rGft.oninput = e => { raceCfg.giftMult = Number(e.target.value); broadcastConfig(); };
+        const rLik = document.getElementById('cfg-race-like'); if(rLik) rLik.oninput = e => { raceCfg.likeMult = Number(e.target.value); broadcastConfig(); };
 
         socket.on("syncConfig", (cfg) => {
             if(isOverlay) {
-                const prevForceEnd = arenaCfg.forceEnd;
-                Object.assign(arenaCfg, cfg);
-                if(gameState === 'waiting') updateLobbyTimer();
-                if(arenaCfg.forceEnd && arenaCfg.forceEnd !== prevForceEnd && gameState === 'playing') {
-                    endMatch();
-                }
+                const prevForceEndArena = arenaCfg.forceEnd;
+                const prevForceEndRace = raceCfg.forceEnd;
+                Object.assign(arenaCfg, cfg.arena);
+                Object.assign(raceCfg, cfg.race);
+                
+                if(gameStateArena === 'waiting') updateLobbyTimer('arena');
+                if(gameStateRace === 'waiting') updateLobbyTimer('race');
+                
+                if(arenaCfg.forceEnd && arenaCfg.forceEnd !== prevForceEndArena && gameStateArena === 'playing') endMatch('arena');
+                if(raceCfg.forceEnd && raceCfg.forceEnd !== prevForceEndRace && gameStateRace === 'playing') endMatch('race');
             }
         });
 
-        let gameState = 'waiting'; 
-        let timeRemaining = 0; 
-        let matchInterval;
+        // ESTADOS INDEPENDIENTES
+        let gameStateArena = 'waiting'; let timeRemainingArena = 0; let matchIntervalArena;
+        let gameStateRace = 'waiting'; let timeRemainingRace = 0; let matchIntervalRace;
 
-        function updateLobbyTimer() {
-            const m = Math.floor(arenaCfg.matchTimeMin).toString().padStart(2, '0');
-            const timerEl = document.getElementById('arena-timer');
+        function updateLobbyTimer(game) {
+            const min = game === 'arena' ? arenaCfg.matchTimeMin : raceCfg.matchTimeMin;
+            const m = Math.floor(min).toString().padStart(2, '0');
+            const timerEl = document.getElementById(game === 'arena' ? 'arena-timer' : 'race-timer');
             if(timerEl) {
                 timerEl.innerText = `${m}:00`;
-                timerEl.style.color = 'var(--cyan)';
-                timerEl.style.textShadow = '0 0 20px rgba(0, 255, 255, 0.5)';
+                timerEl.style.color = game === 'arena' ? 'var(--cyan)' : 'var(--red)';
+                timerEl.style.textShadow = game === 'arena' ? '0 0 20px rgba(0, 255, 255, 0.5)' : '0 0 20px rgba(255, 49, 49, 0.5)';
             }
         }
 
-        function showStartScreen() {
-            gameState = 'waiting';
-            const ovEnd = document.getElementById('end-match-overlay'); if(ovEnd) ovEnd.style.display = 'none';
-            const ovStart = document.getElementById('start-match-overlay'); if(ovStart) ovStart.style.display = 'flex';
-            updateLobbyTimer();
-            balls.clear(); 
-            floatingTexts.length = 0;
-            updateUILeaderboard();
-        }
-
-        function startMatch(emitEvent = true) {
-            if(emitEvent && !isOverlay) socket.emit("syncStartMatch");
-            gameState = 'playing';
-            timeRemaining = arenaCfg.matchTimeMin * 60;
-            const ovStart = document.getElementById('start-match-overlay'); if(ovStart) ovStart.style.display = 'none';
-            speak("¡Batalla iniciada!");
-            
-            clearInterval(matchInterval);
-            matchInterval = setInterval(() => {
-                if (gameState === 'playing') {
-                    timeRemaining--;
-                    updateTimerDisplay();
-                    if (timeRemaining <= 0) endMatch();
-                }
-            }, 1000);
-        }
-
-        function endMatchManual() {
-            if(gameState === 'playing') {
-                if(!isOverlay) {
-                    arenaCfg.forceEnd = Date.now(); 
-                    broadcastConfig();
-                }
-                endMatch();
+        function showStartScreen(game) {
+            if(game === 'arena') {
+                gameStateArena = 'waiting';
+                const ovEnd = document.getElementById('end-match-overlay'); if(ovEnd) ovEnd.style.display = 'none';
+                const ovStart = document.getElementById('start-match-overlay'); if(ovStart) ovStart.style.display = 'flex';
+                updateLobbyTimer('arena'); balls.clear(); floatingTextsArena.length = 0; if(!isOverlay) updateUILeaderboard();
             } else {
-                alert("La batalla no está activa ahora mismo.");
+                gameStateRace = 'waiting';
+                const ovEnd = document.getElementById('end-race-overlay'); if(ovEnd) ovEnd.style.display = 'none';
+                const ovStart = document.getElementById('start-race-overlay'); if(ovStart) ovStart.style.display = 'flex';
+                updateLobbyTimer('race'); racers.clear(); floatingTextsRace.length = 0; if(!isOverlay) updateRaceLeaderboard();
             }
         }
 
-        socket.on("syncStartMatch", () => {
-            if(isOverlay && gameState === 'waiting') startMatch(false);
+        function startMatch(game, emitEvent = true) {
+            if(emitEvent && !isOverlay) socket.emit("syncStartMatch", game);
+            
+            if(game === 'arena') {
+                gameStateArena = 'playing'; timeRemainingArena = arenaCfg.matchTimeMin * 60;
+                const ovStart = document.getElementById('start-match-overlay'); if(ovStart) ovStart.style.display = 'none';
+                speak("¡Batalla en la arena iniciada!");
+                clearInterval(matchIntervalArena);
+                matchIntervalArena = setInterval(() => {
+                    if (gameStateArena === 'playing') { timeRemainingArena--; updateTimerDisplay('arena'); if (timeRemainingArena <= 0) endMatch('arena'); }
+                }, 1000);
+            } else {
+                gameStateRace = 'playing'; timeRemainingRace = raceCfg.matchTimeMin * 60;
+                const ovStart = document.getElementById('start-race-overlay'); if(ovStart) ovStart.style.display = 'none';
+                speak("¡Carrera de la muerte iniciada!");
+                clearInterval(matchIntervalRace);
+                matchIntervalRace = setInterval(() => {
+                    if (gameStateRace === 'playing') { timeRemainingRace--; updateTimerDisplay('race'); if (timeRemainingRace <= 0) endMatch('race'); }
+                }, 1000);
+            }
+        }
+
+        function endMatchManual(game) {
+            if(game === 'arena' && gameStateArena === 'playing') {
+                if(!isOverlay) { arenaCfg.forceEnd = Date.now(); broadcastConfig(); }
+                endMatch('arena');
+            } else if (game === 'race' && gameStateRace === 'playing') {
+                if(!isOverlay) { raceCfg.forceEnd = Date.now(); broadcastConfig(); }
+                endMatch('race');
+            } else { alert("El juego no está activo ahora mismo."); }
+        }
+
+        socket.on("syncStartMatch", (game) => {
+            if(isOverlay) {
+                if(game === 'arena' && gameStateArena === 'waiting') startMatch('arena', false);
+                if(game === 'race' && gameStateRace === 'waiting') startMatch('race', false);
+            }
         });
 
-        function updateTimerDisplay() {
-            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
-            const s = (timeRemaining % 60).toString().padStart(2, '0');
-            const timerEl = document.getElementById('arena-timer');
+        function updateTimerDisplay(game) {
+            const tr = game === 'arena' ? timeRemainingArena : timeRemainingRace;
+            const m = Math.floor(tr / 60).toString().padStart(2, '0');
+            const s = (tr % 60).toString().padStart(2, '0');
+            const timerEl = document.getElementById(game === 'arena' ? 'arena-timer' : 'race-timer');
             if(!timerEl) return;
             
             timerEl.innerText = `${m}:${s}`;
 
-            if (timeRemaining <= 10 && timeRemaining > 0) {
+            if (tr <= 10 && tr > 0) {
                 timerEl.style.color = '#FF3131';
                 timerEl.style.textShadow = '0 0 30px rgba(255, 49, 49, 0.9)';
                 timerEl.classList.add('animate-pulse');
-                if (timeRemaining <= 5) speak(timeRemaining.toString()); 
+                if (tr <= 5 && !isOverlay && ((game === 'arena' && currentActiveGame === 'arena') || (game==='race' && currentActiveGame === 'race'))) speak(tr.toString()); 
             } else {
-                timerEl.style.color = 'var(--cyan)';
-                timerEl.style.textShadow = '0 0 20px rgba(0, 255, 255, 0.5)';
+                timerEl.style.color = game === 'arena' ? 'var(--cyan)' : 'var(--red)';
+                timerEl.style.textShadow = game === 'arena' ? '0 0 20px rgba(0, 255, 255, 0.5)' : '0 0 20px rgba(255, 49, 49, 0.5)';
                 timerEl.classList.remove('animate-pulse');
             }
         }
 
-        function endMatch() {
-            gameState = 'ended';
-            clearInterval(matchInterval);
-            speak("Mostrando ganadores.");
-            
-            const sorted = Array.from(balls.values()).sort((a, b) => b.power - a.power).slice(0, 3);
-            const container = document.getElementById('top-3-container');
-            if(container) {
-                container.innerHTML = '';
-                const medals = ['top-1', 'top-2', 'top-3'];
-                const colors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-                const labels = ['ORO', 'PLATA', 'BRONCE'];
+        function endMatch(game) {
+            if(game === 'arena') {
+                gameStateArena = 'ended'; clearInterval(matchIntervalArena);
+                if(!isOverlay && currentActiveGame === 'arena') speak("Mostrando ganadores de la arena.");
                 
-                if (sorted.length === 0) {
-                    container.innerHTML = '<p class="text-center text-zinc-400 italic text-xl md:text-2xl">Nadie participó en esta ronda...</p>';
-                } else {
-                    sorted.forEach((b, i) => {
+                const sorted = Array.from(balls.values()).sort((a, b) => b.power - a.power).slice(0, 3);
+                const container = document.getElementById('top-3-container');
+                if(container) {
+                    container.innerHTML = '';
+                    const medals = ['top-1', 'top-2', 'top-3']; const colors = ['#FFD700', '#C0C0C0', '#CD7F32']; const labels = ['ORO', 'PLATA', 'BRONCE'];
+                    if (sorted.length === 0) container.innerHTML = '<p class="text-center text-zinc-400 italic text-xl md:text-2xl">Nadie participó en esta ronda...</p>';
+                    else sorted.forEach((b, i) => {
                         const avatarSrc = b.avatarLoaded ? b.avatar.src : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(b.username)}`;
                         container.innerHTML += `
                             <div class="top-winner ${medals[i]} flex items-center justify-between p-2 md:p-4 rounded-xl">
                                 <div class="flex items-center gap-3 md:gap-6">
-                                    <div class="flex flex-col items-center justify-center w-8 md:w-12">
-                                        <span class="text-2xl md:text-4xl font-black leading-none" style="color: ${colors[i]}">#${i+1}</span>
-                                        <span class="text-[8px] md:text-[10px] font-bold uppercase tracking-widest mt-1" style="color: ${colors[i]}">${labels[i]}</span>
-                                    </div>
+                                    <div class="flex flex-col items-center justify-center w-8 md:w-12"><span class="text-2xl md:text-4xl font-black leading-none" style="color: ${colors[i]}">#${i+1}</span><span class="text-[8px] md:text-[10px] font-bold uppercase tracking-widest mt-1" style="color: ${colors[i]}">${labels[i]}</span></div>
                                     <img src="${avatarSrc}" class="w-10 h-10 md:w-16 md:h-16 rounded-full border-2 md:border-4" style="border-color: ${colors[i]}">
                                     <span class="text-xl md:text-3xl font-bold text-white truncate max-w-[120px] md:max-w-[200px]">${b.username}</span>
                                 </div>
                                 <span class="text-2xl md:text-4xl font-black text-green-400 drop-shadow-md">${Math.floor(b.power)} <span class="text-sm md:text-xl">pts</span></span>
-                            </div>
-                        `;
+                            </div>`;
                     });
                 }
-            }
 
-            const endOverlay = document.getElementById('end-match-overlay');
-            if(endOverlay) endOverlay.style.display = 'flex';
+                const endOverlay = document.getElementById('end-match-overlay'); if(endOverlay) endOverlay.style.display = 'flex';
+                let rt = 5; const rc = document.getElementById('restart-countdown'); if(rc) rc.innerText = rt;
+                const rInt = setInterval(() => { rt--; if(rc) rc.innerText = rt; if (rt <= 0) { clearInterval(rInt); showStartScreen('arena'); } }, 1000);
             
-            let restartTimer = 5;
-            const rc = document.getElementById('restart-countdown');
-            if(rc) rc.innerText = restartTimer;
-            
-            const restartInterval = setInterval(() => {
-                restartTimer--;
-                if(rc) rc.innerText = restartTimer;
-                if (restartTimer <= 0) {
-                    clearInterval(restartInterval);
-                    showStartScreen(); 
+            } else if (game === 'race') {
+                gameStateRace = 'ended'; clearInterval(matchIntervalRace);
+                if(!isOverlay && currentActiveGame === 'race') speak("Mostrando ganadores de la carrera.");
+                
+                const sorted = Array.from(racers.values()).sort((a, b) => b.distance - a.distance).slice(0, 3);
+                const container = document.getElementById('top-3-race-container');
+                if(container) {
+                    container.innerHTML = '';
+                    const medals = ['top-1', 'top-2', 'top-3']; const colors = ['#FFD700', '#C0C0C0', '#CD7F32']; const labels = ['ORO', 'PLATA', 'BRONCE'];
+                    if (sorted.length === 0) container.innerHTML = '<p class="text-center text-zinc-400 italic text-xl md:text-2xl">La pista quedó vacía...</p>';
+                    else sorted.forEach((r, i) => {
+                        const avatarSrc = r.avatarLoaded ? r.avatar.src : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(r.username)}`;
+                        container.innerHTML += `
+                            <div class="top-winner ${medals[i]} flex items-center justify-between p-2 md:p-4 rounded-xl border-red-500">
+                                <div class="flex items-center gap-3 md:gap-6">
+                                    <div class="flex flex-col items-center justify-center w-8 md:w-12"><span class="text-2xl md:text-4xl font-black leading-none" style="color: ${colors[i]}">#${i+1}</span><span class="text-[8px] md:text-[10px] font-bold uppercase tracking-widest mt-1" style="color: ${colors[i]}">${labels[i]}</span></div>
+                                    <img src="${avatarSrc}" class="w-10 h-10 md:w-16 md:h-16 rounded-full border-2 md:border-4" style="border-color: ${colors[i]}">
+                                    <span class="text-xl md:text-3xl font-bold text-white truncate max-w-[120px] md:max-w-[200px]">${r.username}</span>
+                                </div>
+                                <span class="text-2xl md:text-4xl font-black text-red-500 drop-shadow-md">${Math.floor(r.distance)} <span class="text-sm md:text-xl">m</span></span>
+                            </div>`;
+                    });
                 }
-            }, 1000);
+
+                const endOverlay = document.getElementById('end-race-overlay'); if(endOverlay) endOverlay.style.display = 'flex';
+                let rt = 5; const rc = document.getElementById('restart-race-countdown'); if(rc) rc.innerText = rt;
+                const rInt = setInterval(() => { rt--; if(rc) rc.innerText = rt; if (rt <= 0) { clearInterval(rInt); showStartScreen('race'); } }, 1000);
+            }
         }
 
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas ? canvas.getContext('2d') : null;
+        /* ==========================================================================
+           MOTOR GRÁFICO 1: ARENA DE BATALLA
+           ========================================================================== */
+        const canvas = document.getElementById('game-canvas'); const ctx = canvas ? canvas.getContext('2d') : null;
         const wrapper = document.getElementById('canvas-wrapper');
-        let width, height;
-        const balls = new Map();
-        const floatingTexts = [];
+        let width, height; const balls = new Map(); const floatingTextsArena = [];
         const COLORS = ['#00FFFF', '#FF00FF', '#39FF14', '#FF3131', '#FFD700', '#FF8C00', '#8A2BE2'];
         const MIN_POWER = 10; const BASE_RADIUS = 20; const MAX_RADIUS = 150;
 
         function resizeCanvas() {
-            if(!wrapper || !canvas) return;
-            width = wrapper.clientWidth; height = wrapper.clientHeight;
-            canvas.width = width; canvas.height = height;
+            if(wrapper && canvas) { width = wrapper.clientWidth; height = wrapper.clientHeight; canvas.width = width; canvas.height = height; }
+            if(wrapperR && canvasR) { widthR = wrapperR.clientWidth; heightR = wrapperR.clientHeight; canvasR.width = widthR; canvasR.height = heightR; }
         }
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
 
         class Ball {
             constructor(username, avatarUrl) {
                 this.username = username; this.power = arenaCfg.initialPower; 
                 this.radius = this.calculateRadius();
-                this.x = Math.random() * (width - this.radius * 2) + this.radius;
-                this.y = Math.random() * (height - this.radius * 2) + this.radius;
-                this.vx = (Math.random() - 0.5) * arenaCfg.baseSpeed;
-                this.vy = (Math.random() - 0.5) * arenaCfg.baseSpeed;
-                this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
-                this.isFurious = false; this.furyTimer = 0;
+                this.x = Math.random() * (width - this.radius * 2) + this.radius; this.y = Math.random() * (height - this.radius * 2) + this.radius;
+                this.vx = (Math.random() - 0.5) * arenaCfg.baseSpeed; this.vy = (Math.random() - 0.5) * arenaCfg.baseSpeed;
+                this.color = COLORS[Math.floor(Math.random() * COLORS.length)]; this.isFurious = false; this.furyTimer = 0;
                 this.avatar = new Image(); this.avatar.crossOrigin = "Anonymous"; this.avatarLoaded = false;
                 if (avatarUrl) this.avatar.src = `/avatar-proxy?url=${encodeURIComponent(avatarUrl)}`;
                 else this.avatar.src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(username)}`;
@@ -773,18 +842,13 @@
             addPower(amount) { this.power += amount; this.radius = this.calculateRadius(); }
             triggerFury(durationMs) { this.isFurious = true; this.furyTimer = durationMs; this.vx *= 2.0; this.vy *= 2.0; this.radius = this.calculateRadius(); }
             update(deltaTime) {
-                if (this.isFurious) {
-                    this.furyTimer -= deltaTime;
-                    if (this.furyTimer <= 0) { this.isFurious = false; this.radius = this.calculateRadius(); this.vx *= 0.5; this.vy *= 0.5; }
-                }
+                if (this.isFurious) { this.furyTimer -= deltaTime; if (this.furyTimer <= 0) { this.isFurious = false; this.radius = this.calculateRadius(); this.vx *= 0.5; this.vy *= 0.5; } }
                 this.vx *= 0.995; this.vy *= 0.995;
                 const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
                 if (speed < (arenaCfg.baseSpeed * 0.2)) { this.vx += (Math.random() - 0.5) * (arenaCfg.baseSpeed * 0.1); this.vy += (Math.random() - 0.5) * (arenaCfg.baseSpeed * 0.1); }
                 this.x += this.vx; this.y += this.vy;
-                if (this.x - this.radius <= 0) { this.x = this.radius; this.vx *= -1; }
-                if (this.x + this.radius >= width) { this.x = width - this.radius; this.vx *= -1; }
-                if (this.y - this.radius <= 0) { this.y = this.radius; this.vy *= -1; }
-                if (this.y + this.radius >= height) { this.y = height - this.radius; this.vy *= -1; }
+                if (this.x - this.radius <= 0) { this.x = this.radius; this.vx *= -1; } if (this.x + this.radius >= width) { this.x = width - this.radius; this.vx *= -1; }
+                if (this.y - this.radius <= 0) { this.y = this.radius; this.vy *= -1; } if (this.y + this.radius >= height) { this.y = height - this.radius; this.vy *= -1; }
             }
             draw(ctx) {
                 ctx.save(); ctx.shadowBlur = this.isFurious ? 30 : 15; ctx.shadowColor = this.isFurious ? '#FFFFFF' : this.color;
@@ -795,8 +859,7 @@
                 const displayUser = this.username.length > 10 ? this.username.substring(0,10) + '..' : this.username;
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.75)'; ctx.beginPath();
                 if(ctx.roundRect) ctx.roundRect(this.x - 45, this.y + this.radius + 4, 90, 32, 6); else ctx.rect(this.x - 45, this.y + this.radius + 4, 90, 32);
-                ctx.fill();
-                ctx.fillStyle = '#FFF'; ctx.font = 'bold 11px Rajdhani'; ctx.textAlign = 'center'; ctx.fillText(displayUser, this.x, this.y + this.radius + 16);
+                ctx.fill(); ctx.fillStyle = '#FFF'; ctx.font = 'bold 11px Rajdhani'; ctx.textAlign = 'center'; ctx.fillText(displayUser, this.x, this.y + this.radius + 16);
                 ctx.font = '900 14px Rajdhani'; ctx.fillStyle = this.isFurious ? '#FFD700' : '#39FF14'; ctx.fillText(Math.floor(this.power) + " pts", this.x, this.y + this.radius + 30);
                 ctx.restore();
             }
@@ -806,133 +869,254 @@
             const ballArray = Array.from(balls.values());
             for (let i = 0; i < ballArray.length; i++) {
                 for (let j = i + 1; j < ballArray.length; j++) {
-                    const b1 = ballArray[i], b2 = ballArray[j];
-                    const dx = b2.x - b1.x, dy = b2.y - b1.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const minDistance = b1.radius + b2.radius;
+                    const b1 = ballArray[i], b2 = ballArray[j]; const dx = b2.x - b1.x, dy = b2.y - b1.y; const distance = Math.sqrt(dx * dx + dy * dy); const minDistance = b1.radius + b2.radius;
                     if (distance < minDistance) {
                         const overlap = minDistance - distance; const nx = dx / distance, ny = dy / distance;
                         b1.x -= nx * (overlap / 2); b1.y -= ny * (overlap / 2); b2.x += nx * (overlap / 2); b2.y += ny * (overlap / 2);
                         const p = 2 * (b1.vx * nx + b1.vy * ny - b2.vx * nx - b2.vy * ny) / (b1.radius + b2.radius);
-                        b1.vx -= p * b2.radius * nx; b1.vy -= p * b2.radius * ny;
-                        b2.vx += p * b1.radius * nx; b2.vy += p * b1.radius * ny;
-                        if (gameState === 'playing' && Math.abs(b1.power - b2.power) > 5) {
-                            let winner, loser;
-                            if (b1.power > b2.power) { winner = b1; loser = b2; } else { winner = b2; loser = b1; }
+                        b1.vx -= p * b2.radius * nx; b1.vy -= p * b2.radius * ny; b2.vx += p * b1.radius * nx; b2.vy += p * b1.radius * ny;
+                        if (gameStateArena === 'playing' && Math.abs(b1.power - b2.power) > 5) {
+                            let winner, loser; if (b1.power > b2.power) { winner = b1; loser = b2; } else { winner = b2; loser = b1; }
                             const currentSteal = winner.isFurious ? (arenaCfg.stealPercent * 2) : arenaCfg.stealPercent;
                             const dmg = Math.max(1, Math.floor(loser.power * currentSteal));
                             winner.addPower(dmg); loser.addPower(-dmg);
-                            spawnFloatingText(winner.x, winner.y - winner.radius, `+${dmg}`, winner.color);
-                            spawnFloatingText(loser.x, loser.y + loser.radius, `-${dmg}`, '#FF3131');
+                            floatingTextsArena.push({ x: winner.x, y: winner.y - winner.radius, text:`+${dmg}`, color:winner.color, life:1.0, vy:-1.5 });
+                            floatingTextsArena.push({ x: loser.x, y: loser.y + loser.radius, text:`-${dmg}`, color:'#FF3131', life:1.0, vy:-1.5 });
                         }
                     }
                 }
             }
         }
 
-        function spawnFloatingText(x, y, text, color) { floatingTexts.push({ x, y, text, color, life: 1.0, vy: -1.5 }); }
+        /* ==========================================================================
+           MOTOR GRÁFICO 2: CARRERA DE LA MUERTE
+           ========================================================================== */
+        const canvasR = document.getElementById('race-canvas'); const ctxR = canvasR ? canvasR.getContext('2d') : null;
+        const wrapperR = document.getElementById('canvas-wrapper-race');
+        let widthR, heightR; const racers = new Map(); const floatingTextsRace = [];
+        let cameraX = 0; let bgOffset = 0;
 
-        function drawFloatingTexts(ctx) {
-            for (let i = floatingTexts.length - 1; i >= 0; i--) {
-                const ft = floatingTexts[i]; ft.y += ft.vy; ft.life -= 0.02;
-                ctx.save(); ctx.globalAlpha = Math.max(0, ft.life); ctx.fillStyle = ft.color; ctx.font = 'bold 20px Rajdhani';
-                ctx.shadowColor = '#000'; ctx.shadowBlur = 4; ctx.fillText(ft.text, ft.x, ft.y); ctx.restore();
-                if (ft.life <= 0) floatingTexts.splice(i, 1);
+        class Racer {
+            constructor(username, avatarUrl) {
+                this.username = username; this.distance = 0; this.velocity = 0;
+                this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+                // Asignar carril (Y)
+                const margin = 50; const availableHeight = heightR - margin * 2;
+                this.y = margin + Math.random() * availableHeight;
+                this.targetY = this.y; // Para cambios suaves si quisieramos
+                
+                this.avatar = new Image(); this.avatar.crossOrigin = "Anonymous"; this.avatarLoaded = false;
+                if (avatarUrl) this.avatar.src = `/avatar-proxy?url=${encodeURIComponent(avatarUrl)}`;
+                else this.avatar.src = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(username)}`;
+                this.avatar.onload = () => { this.avatarLoaded = true; };
+            }
+            addBoost(amount) {
+                this.velocity += amount;
+            }
+            update(deltaTime) {
+                if (gameStateRace === 'playing') {
+                    this.distance += (this.velocity * deltaTime) / 100;
+                    this.velocity *= raceCfg.friction; // Fricción constante
+                }
+            }
+            draw(ctx, camX) {
+                // Dibujar en relación a la cámara
+                const drawX = this.distance - camX + (widthR * 0.2); // El líder se dibuja aprox al 20% o 70%
+                if (drawX < -100 || drawX > widthR + 100) return; // Fuera de pantalla
+                
+                ctx.save();
+                ctx.translate(drawX, this.y);
+                
+                // Estela de fuego
+                if(this.velocity > 0.5) {
+                    ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
+                    ctx.shadowBlur = 15; ctx.shadowColor = 'red';
+                    ctx.beginPath();
+                    const flameLen = Math.min(this.velocity * 2, 100);
+                    ctx.moveTo(-15, 0); ctx.lineTo(-15 - flameLen, -5); ctx.lineTo(-15 - flameLen, 5);
+                    ctx.fill();
+                }
+
+                // Cuerpo de la nave (Triángulo/Cuña cibernética)
+                ctx.shadowBlur = 20; ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.moveTo(40, 0); ctx.lineTo(-15, -15); ctx.lineTo(-5, 0); ctx.lineTo(-15, 15); ctx.closePath(); ctx.fill();
+
+                // Cabina oscura
+                ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(-5, -6); ctx.lineTo(0, 0); ctx.lineTo(-5, 6); ctx.closePath(); ctx.fill();
+
+                // Avatar (Pequeño círculo sobre la nave)
+                if(this.avatarLoaded) {
+                    ctx.save(); ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI*2); ctx.clip();
+                    ctx.drawImage(this.avatar, -12, -12, 24, 24); ctx.restore();
+                    ctx.lineWidth = 2; ctx.strokeStyle = '#FFF'; ctx.stroke();
+                }
+
+                // Nombre y Distancia
+                const displayUser = this.username.length > 8 ? this.username.substring(0,8) + '..' : this.username;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                if(ctx.roundRect) ctx.roundRect(-30, 20, 60, 24, 4); else ctx.rect(-30, 20, 60, 24);
+                ctx.fill();
+                ctx.fillStyle = '#FFF'; ctx.font = 'bold 10px Rajdhani'; ctx.textAlign = 'center'; ctx.fillText(displayUser, 0, 30);
+                ctx.fillStyle = '#FFD700'; ctx.font = '900 11px Rajdhani'; ctx.fillText(Math.floor(this.distance) + "m", 0, 40);
+
+                ctx.restore();
             }
         }
 
-        let lastTime = 0;
-        function gameLoop(timestamp) {
-            if(!ctx) return;
-            const deltaTime = timestamp - lastTime; lastTime = timestamp; ctx.clearRect(0, 0, width, height);
-            const deadBalls = [];
-            for (const [username, ball] of balls.entries()) {
-                ball.update(deltaTime); ball.draw(ctx);
-                if (ball.power < MIN_POWER && gameState === 'playing') { deadBalls.push(username); spawnFloatingText(ball.x, ball.y, "¡ELIMINADO!", "#FF0000"); }
+        let lastTimeLoop = 0;
+        function masterGameLoop(timestamp) {
+            const deltaTime = timestamp - lastTimeLoop; lastTimeLoop = timestamp;
+            
+            // --- LOOP ARENA ---
+            if(ctx && (!document.getElementById('view-game').classList.contains('hidden') || isOverlay && overlayType==='arena')) {
+                ctx.clearRect(0, 0, width, height);
+                const deadBalls = [];
+                for (const [user, ball] of balls.entries()) {
+                    ball.update(deltaTime); ball.draw(ctx);
+                    if (ball.power < MIN_POWER && gameStateArena === 'playing') { deadBalls.push(user); floatingTextsArena.push({ x:ball.x, y:ball.y, text:"¡ELIMINADO!", color:"#FF0000", life:1.0, vy:-1.5}); }
+                }
+                if (gameStateArena === 'playing') deadBalls.forEach(u => balls.delete(u));
+                resolveCollisions(); 
+                if(!isOverlay) updateUILeaderboard(); // Actualiza HTML
+                
+                // Dibujar textos Arena
+                for (let i = floatingTextsArena.length - 1; i >= 0; i--) {
+                    const ft = floatingTextsArena[i]; ft.y += ft.vy; ft.life -= 0.02;
+                    ctx.save(); ctx.globalAlpha = Math.max(0, ft.life); ctx.fillStyle = ft.color; ctx.font = 'bold 20px Rajdhani';
+                    ctx.shadowColor = '#000'; ctx.shadowBlur = 4; ctx.fillText(ft.text, ft.x, ft.y); ctx.restore();
+                    if (ft.life <= 0) floatingTextsArena.splice(i, 1);
+                }
             }
-            if (gameState === 'playing') deadBalls.forEach(user => balls.delete(user));
-            resolveCollisions(); 
-            updateUILeaderboard();
-            drawFloatingTexts(ctx); requestAnimationFrame(gameLoop);
+
+            // --- LOOP CARRERA ---
+            if(ctxR && (!document.getElementById('view-race').classList.contains('hidden') || isOverlay && overlayType==='race')) {
+                ctxR.clearRect(0, 0, widthR, heightR);
+                
+                // Determinar el líder para la cámara
+                let maxDist = 0;
+                for (const r of racers.values()) { if (r.distance > maxDist) maxDist = r.distance; }
+                
+                // Suavizar movimiento de cámara (sigue al líder manteniéndolo al 70% de la pantalla)
+                const targetCamX = maxDist - (widthR * 0.5); 
+                cameraX += (targetCamX - cameraX) * 0.05; 
+                if(cameraX < 0) cameraX = 0; // No ir hacia atrás de 0
+
+                // Dibujar Fondo Synthwave (Cuadrícula)
+                bgOffset = (cameraX * 0.5) % 100;
+                ctxR.save();
+                ctxR.strokeStyle = 'rgba(138, 43, 226, 0.15)'; // Morado oscuro
+                ctxR.lineWidth = 2;
+                ctxR.beginPath();
+                // Líneas verticales moviéndose
+                for(let x = -bgOffset; x < widthR; x += 100) { ctxR.moveTo(x, 0); ctxR.lineTo(x, heightR); }
+                // Líneas horizontales con perspectiva (más juntas arriba)
+                for(let y = heightR; y > 0; y -= (y*0.1) + 20) { ctxR.moveTo(0, y); ctxR.lineTo(widthR, y); }
+                ctxR.stroke();
+                ctxR.restore();
+
+                // Actualizar y dibujar naves
+                for (const r of racers.values()) {
+                    r.update(deltaTime);
+                    r.draw(ctxR, cameraX);
+                }
+                
+                if(!isOverlay) updateRaceLeaderboard();
+
+                // Textos flotantes Carrera
+                for (let i = floatingTextsRace.length - 1; i >= 0; i--) {
+                    const ft = floatingTextsRace[i]; ft.y += ft.vy; ft.life -= 0.02;
+                    // Proyectar coordenadas basadas en cámara
+                    const drawX = ft.x - cameraX + (widthR * 0.2);
+                    ctxR.save(); ctxR.globalAlpha = Math.max(0, ft.life); ctxR.fillStyle = ft.color; ctxR.font = 'bold 20px Rajdhani';
+                    ctxR.shadowColor = '#000'; ctxR.shadowBlur = 4; ctxR.fillText(ft.text, drawX, ft.y); ctxR.restore();
+                    if (ft.life <= 0) floatingTextsRace.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(masterGameLoop);
         }
         
-        requestAnimationFrame(gameLoop);
-        showStartScreen();
+        resizeCanvas();
+        requestAnimationFrame(masterGameLoop);
+        showStartScreen('arena');
+        showStartScreen('race');
 
-        // --- ACTUALIZA EL RANKING DE LA ARENA (PANEL INTERNO Y DASHBOARD) ---
+        // --- ACTUALIZACIONES DE UI ---
         function updateUILeaderboard() {
-            const pc = document.getElementById('player-count');
-            if(pc) pc.innerText = `${balls.size}`;
-            
+            const pc = document.getElementById('player-count'); if(pc) pc.innerText = `${balls.size}`;
             const sorted = Array.from(balls.values()).sort((a, b) => b.power - a.power).slice(0, 10);
             const htmlContent = sorted.map((b, i) => `
                 <div class="flex items-center justify-between bg-black/40 p-2 rounded border border-zinc-800 ${i===0 ? 'border-cyan-500/50 bg-cyan-900/10' : ''}">
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="font-black ${i===0 ? 'text-cyan-400 text-lg' : 'text-zinc-500'}">${i===0 ? '👑' : '#'+(i+1)}</span>
-                        <div class="w-2 h-2 rounded-full" style="background-color: ${b.color}"></div>
-                        <span class="font-bold text-white truncate max-w-[80px] md:max-w-[100px]">${b.username}</span>
-                    </div>
+                    <div class="flex items-center gap-2 text-xs"><span class="font-black ${i===0 ? 'text-cyan-400 text-lg' : 'text-zinc-500'}">${i===0 ? '👑' : '#'+(i+1)}</span><div class="w-2 h-2 rounded-full" style="background-color: ${b.color}"></div><span class="font-bold text-white truncate max-w-[80px] md:max-w-[100px]">${b.username}</span></div>
                     <span class="text-[10px] md:text-xs font-mono font-bold ${b.isFurious ? 'text-purple-400 animate-pulse' : 'text-green-400'}">${Math.floor(b.power)} pts</span>
                 </div>
             `).join('');
-
-            const containerArena = document.getElementById('arena-ranking');
-            if(containerArena) containerArena.innerHTML = htmlContent;
-            
-            const containerMobile = document.getElementById('arena-ranking-mobile');
-            if(containerMobile) containerMobile.innerHTML = htmlContent;
+            const cArena = document.getElementById('arena-ranking'); if(cArena) cArena.innerHTML = htmlContent;
+            const cMob = document.getElementById('arena-ranking-mobile'); if(cMob) cMob.innerHTML = htmlContent;
         }
 
-        // --- ACTUALIZAR TABLA TOP DONADORES (PANEL INTERNO Y DASHBOARD) ---
+        function updateRaceLeaderboard() {
+            const pc = document.getElementById('race-player-count'); if(pc) pc.innerText = `${racers.size}`;
+            const sorted = Array.from(racers.values()).sort((a, b) => b.distance - a.distance).slice(0, 10);
+            const htmlContent = sorted.map((r, i) => `
+                <div class="flex items-center justify-between bg-black/40 p-2 rounded border border-zinc-800 ${i===0 ? 'border-red-500/50 bg-red-900/10' : ''}">
+                    <div class="flex items-center gap-2 text-xs"><span class="font-black ${i===0 ? 'text-red-500 text-lg' : 'text-zinc-500'}">${i===0 ? '👑' : '#'+(i+1)}</span><div class="w-2 h-2 rounded-full" style="background-color: ${r.color}"></div><span class="font-bold text-white truncate max-w-[80px] md:max-w-[100px]">${r.username}</span></div>
+                    <span class="text-[10px] md:text-xs font-mono font-bold text-red-400">${Math.floor(r.distance)} m</span>
+                </div>
+            `).join('');
+            const cRace = document.getElementById('race-ranking'); if(cRace) cRace.innerHTML = htmlContent;
+            const cMob = document.getElementById('race-ranking-mobile'); if(cMob) cMob.innerHTML = htmlContent;
+        }
+
         function updateDonatorsRanking() {
             const sorted = Array.from(donatorsMap.entries()).sort((a,b) => b[1] - a[1]).slice(0, 10);
             const htmlContent = sorted.map((d, i) => `
                 <div class="flex items-center justify-between bg-black/40 p-2 rounded border border-yellow-500/20 ${i===0 ? 'border-yellow-500/50 bg-yellow-900/10' : ''}">
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="text-yellow-500 font-black ${i===0 ? 'text-lg' : 'text-sm'}">${i === 0 ? '👑' : '#' + (i+1)}</span>
-                        <span class="font-bold text-zinc-300 truncate max-w-[80px] md:max-w-[100px]">${d[0]}</span>
-                    </div>
+                    <div class="flex items-center gap-2 text-xs"><span class="text-yellow-500 font-black ${i===0 ? 'text-lg' : 'text-sm'}">${i === 0 ? '👑' : '#' + (i+1)}</span><span class="font-bold text-zinc-300 truncate max-w-[80px] md:max-w-[100px]">${d[0]}</span></div>
                     <span class="text-yellow-400 font-mono text-[10px] md:text-[11px] bg-yellow-500/10 px-2 py-1 rounded font-bold">${Math.floor(d[1])} pts</span>
                 </div>
             `).join('');
 
-            // Actualizar en el dashboard general
-            const dashContainer = document.getElementById('dashboard-donators-container');
-            if(dashContainer) dashContainer.innerHTML = htmlContent;
-            // Actualizar en el overlay de la arena (si es que la URL es ?overlay=donators también usa este)
-            const donatorsContainer = document.getElementById('donators-container');
-            if(donatorsContainer) donatorsContainer.innerHTML = htmlContent;
-            // Actualizar el panel lateral de la arena
-            const arenaDonators = document.getElementById('arena-donators');
-            if(arenaDonators) arenaDonators.innerHTML = htmlContent;
+            const dash = document.getElementById('dashboard-donators-container'); if(dash) dash.innerHTML = htmlContent;
+            const donatorsC = document.getElementById('donators-container'); if(donatorsC) donatorsC.innerHTML = htmlContent;
+            const arenaD = document.getElementById('arena-donators'); if(arenaD) arenaD.innerHTML = htmlContent;
         }
 
-        function checkVoicePermission(data) {
-            const radio = document.querySelector('input[name="tts-filter"]:checked');
-            if (!radio) return true;
-            const filter = radio.value;
-            if (filter === 'all') return true;
-            if (filter === 'followers' && (data.isFollower || data.isMod || data.isSub)) return true;
-            if (filter === 'vip' && (data.isMod || data.isSub)) return true;
-            if (filter === 'gifters' && giftersSet.has(data.user)) return true; 
-            return false;
-        }
-
-        function getBadges(data) {
-            let badges = '';
-            if (data.isMod) badges += '<span class="bg-red-500 text-black text-[8px] px-1 rounded font-bold mr-1">MOD</span>';
-            if (data.isSub) badges += '<span class="bg-purple-500 text-white text-[8px] px-1 rounded font-bold mr-1">SUB</span>';
-            if (data.isFollower && !data.isMod && !data.isSub) badges += '<span class="bg-green-500 text-black text-[8px] px-1 rounded font-bold mr-1">SIGUE</span>';
-            if (giftersSet.has(data.user)) badges += '<span class="bg-yellow-500 text-black text-[8px] px-1 rounded font-bold mr-1">DONADOR</span>';
-            return badges;
-        }
-
-        function handleUserInteraction(username, powerToAdd, avatarUrl) {
-            if (gameState === 'ended') return;
+        // --- GESTIÓN DE ENTRADAS (INPUTS DE TIKTOK) ---
+        function handleArenaInteraction(username, powerToAdd, avatarUrl) {
+            if (gameStateArena === 'ended') return;
             if (!balls.has(username)) balls.set(username, new Ball(username, avatarUrl));
             balls.get(username).addPower(powerToAdd);
         }
 
+        function handleRaceInteraction(username, type, amount, avatarUrl) {
+            if (gameStateRace !== 'playing') return;
+            
+            // Evaluar filtro de modos
+            const mode = raceCfg.mode;
+            let isValid = false;
+            if(mode === 'all') isValid = true;
+            if(mode === 'likes_gifts' && (type === 'like' || type === 'gift')) isValid = true;
+            if(mode === 'gifts' && type === 'gift') isValid = true;
+            
+            if(!isValid) return;
+
+            if (!racers.has(username)) racers.set(username, new Racer(username, avatarUrl));
+            const racer = racers.get(username);
+            
+            let speedBoost = 0;
+            if(type === 'gift') speedBoost = amount * raceCfg.giftMult;
+            if(type === 'like') speedBoost = amount * raceCfg.likeMult;
+            if(type === 'chat') speedBoost = 10; // Chat da poquito siempre
+            
+            racer.addBoost(speedBoost);
+            floatingTextsRace.push({ x: racer.distance, y: racer.y - 20, text: `+VEL!`, color: '#39FF14', life: 1.0, vy: -1.0 });
+        }
+
+
+        // --- EVENTOS SOCKET ---
         socket.on("actionsUpdated", (actions) => {
             const list = document.getElementById('actions-list');
             if(list) {
@@ -953,19 +1137,42 @@
             audio.play();
         });
 
-        socket.on("singleLike", (data) => { data.isFollower = true; handleUserInteraction(data.user, 2, data.avatar); });
+        socket.on("singleLike", (data) => { 
+            data.isFollower = true; 
+            handleArenaInteraction(data.user, 2, data.avatar); 
+            handleRaceInteraction(data.user, 'like', 1, data.avatar);
+        });
 
         socket.on("likeRanking", (ranking) => {
             const container = document.getElementById('ranking-container');
             if(container) {
-                container.innerHTML = ranking.map(user => `
+                container.innerHTML = ranking.map((user, i) => `
                     <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-red-500/20 hover:border-red-500/50 transition-colors">
-                        <div class="flex items-center gap-3 text-xs"><span class="text-red-500 font-black text-sm">#${user.rank}</span><span class="font-bold text-zinc-300 truncate max-w-[100px]">${user.user}</span></div>
+                        <div class="flex items-center gap-3 text-xs"><span class="text-red-500 font-black text-sm">${i===0?'👑':'#'+user.rank}</span><span class="font-bold text-zinc-300 truncate max-w-[100px]">${user.user}</span></div>
                         <span class="text-red-400 font-mono text-[11px] bg-red-500/10 px-2 py-1 rounded font-bold">${user.likes} ❤</span>
                     </div>
                 `).join('');
             }
         });
+
+        function checkVoicePermission(data) {
+            const radio = document.querySelector('input[name="tts-filter"]:checked');
+            if (!radio) return true;
+            const filter = radio.value;
+            if (filter === 'all') return true;
+            if (filter === 'followers' && (data.isFollower || data.isMod || data.isSub)) return true;
+            if (filter === 'vip' && (data.isMod || data.isSub)) return true;
+            if (filter === 'gifters' && giftersSet.has(data.user)) return true; 
+            return false;
+        }
+        function getBadges(data) {
+            let badges = '';
+            if (data.isMod) badges += '<span class="bg-red-500 text-black text-[8px] px-1 rounded font-bold mr-1">MOD</span>';
+            if (data.isSub) badges += '<span class="bg-purple-500 text-white text-[8px] px-1 rounded font-bold mr-1">SUB</span>';
+            if (data.isFollower && !data.isMod && !data.isSub) badges += '<span class="bg-green-500 text-black text-[8px] px-1 rounded font-bold mr-1">SIGUE</span>';
+            if (giftersSet.has(data.user)) badges += '<span class="bg-yellow-500 text-black text-[8px] px-1 rounded font-bold mr-1">DONADOR</span>';
+            return badges;
+        }
 
         socket.on("chat", (data) => {
             const badges = getBadges(data);
@@ -983,7 +1190,8 @@
             }
 
             if (canSpeak) speak(`${data.user} dice: ${data.message}`);
-            handleUserInteraction(data.user, 1, data.avatar);
+            handleArenaInteraction(data.user, 1, data.avatar);
+            handleRaceInteraction(data.user, 'chat', 1, data.avatar);
         });
 
         socket.on("gift", (data) => {
@@ -1013,15 +1221,18 @@
                 if (histContainer.children.length > 30) histContainer.removeChild(histContainer.lastElementChild);
             }
             
-            handleUserInteraction(data.user, powerAdded, data.avatar); 
+            handleArenaInteraction(data.user, powerAdded, data.avatar); 
+            handleRaceInteraction(data.user, 'gift', data.amount, data.avatar);
             
             const ball = balls.get(data.user);
-            if(ball && gameState !== 'ended') {
+            if(ball && gameStateArena !== 'ended') {
                 ball.triggerFury(arenaCfg.furyTimeSec * 1000); 
-                spawnFloatingText(ball.x, ball.y, "¡FURIA!", "#8A2BE2");
+                floatingTextsArena.push({ x: ball.x, y: ball.y, text: "¡FURIA!", color: "#8A2BE2", life: 1.0, vy: -1.5 });
             }
         });
 
     </script>
+</body>
+</html>
 </body>
 </html>
