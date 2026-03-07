@@ -116,7 +116,6 @@
             position: absolute;
             top: 20px; left: 50%;
             transform: translateX(-50%);
-            font-size: 4rem;
             font-weight: 900;
             color: var(--cyan);
             text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
@@ -132,7 +131,7 @@
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(4px);
             z-index: 30;
-            display: flex; 
+            display: flex; /* Oculto o visible por JS */
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -165,23 +164,22 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 10px; }
         
-        /* Animaciones para chat y regalos */
         .fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="p-4 pb-12">
+<body class="p-2 md:p-4 pb-12">
 
     <div id="loader">
         <div class="spinner"></div>
         <p class="mt-4 text-cyan-500 font-bold tracking-widest animate-pulse uppercase">Procesando Datos...</p>
     </div>
 
-    <nav class="max-w-[1800px] mx-auto mb-4 flex items-center justify-between glass p-4">
-        <div class="flex items-center gap-4">
-            <img id="host-avatar" src="/Logo.png" alt="Logo" class="h-[60px] w-[60px] object-cover rounded-full border-2 border-transparent transition-all duration-500" onerror="this.src='/Logo.png'">
+    <nav class="max-w-[1800px] mx-auto mb-4 flex flex-col lg:flex-row items-center justify-between glass p-4 gap-4">
+        <div class="flex items-center gap-4 w-full lg:w-auto justify-center lg:justify-start">
+            <img id="host-avatar" src="/Logo.png" alt="Logo" class="h-[50px] w-[50px] md:h-[60px] md:w-[60px] object-cover rounded-full border-2 border-transparent transition-all duration-500" onerror="this.src='/Logo.png'">
             <div class="flex flex-col">
-                <h1 id="host-title" class="text-3xl font-black italic tracking-tighter leading-none uppercase">NEXORA <span class="text-cyan-500">ULTRA</span></h1>
+                <h1 id="host-title" class="text-2xl md:text-3xl font-black italic tracking-tighter leading-none uppercase">NEXORA <span class="text-cyan-500">ULTRA</span></h1>
                 <div class="flex items-center gap-2 mt-1">
                     <div id="status-pulse" class="w-2 h-2 rounded-full bg-red-500"></div>
                     <span id="connection-status" class="text-[10px] uppercase tracking-[3px] text-red-500 font-bold italic">Desconectado</span>
@@ -189,15 +187,15 @@
             </div>
         </div>
 
-        <div class="flex gap-4 items-center">
-            <input id="username" type="text" placeholder="@usuario_tiktok" class="bg-black/60 border border-zinc-800 px-3 py-2 rounded-lg text-xs focus:border-cyan-500 outline-none w-40 font-medium">
-            <input id="key" type="password" placeholder="Access Key" class="bg-black/60 border border-zinc-800 px-3 py-2 rounded-lg text-xs focus:border-cyan-500 outline-none w-32 font-medium">
-            <button id="btn-connect" class="bg-cyan-600 hover:bg-cyan-400 text-black px-6 py-2 rounded-lg font-black text-xs transition-all uppercase tracking-widest">Conectar</button>
-            <button id="btn-disconnect" class="hidden bg-zinc-900 border border-red-600 text-red-500 px-6 py-2 rounded-lg font-black text-xs transition-all uppercase tracking-widest">Salir</button>
+        <div class="flex flex-wrap justify-center gap-2 md:gap-4 items-center">
+            <input id="username" type="text" placeholder="@usuario_tiktok" class="bg-black/60 border border-zinc-800 px-3 py-2 rounded-lg text-xs focus:border-cyan-500 outline-none w-[140px] md:w-40 font-medium">
+            <input id="key" type="password" placeholder="Access Key" class="bg-black/60 border border-zinc-800 px-3 py-2 rounded-lg text-xs focus:border-cyan-500 outline-none w-[100px] md:w-32 font-medium">
+            <button id="btn-connect" class="bg-cyan-600 hover:bg-cyan-400 text-black px-4 md:px-6 py-2 rounded-lg font-black text-xs transition-all uppercase tracking-widest">Conectar</button>
+            <button id="btn-disconnect" class="hidden bg-zinc-900 border border-red-600 text-red-500 px-4 md:px-6 py-2 rounded-lg font-black text-xs transition-all uppercase tracking-widest">Salir</button>
         </div>
     </nav>
 
-    <div class="max-w-[1800px] mx-auto mb-6 flex gap-2 glass p-1">
+    <div class="max-w-[1800px] mx-auto mb-6 flex flex-col sm:flex-row gap-2 glass p-1">
         <button onclick="showTab('dashboard')" id="tab-btn-dashboard" class="tab-btn active flex-1 py-3 rounded-lg flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white">
             <i data-lucide="layout-dashboard" class="w-4 h-4 text-purple-500"></i> Dashboard Maestro
         </button>
@@ -206,9 +204,9 @@
         </button>
     </div>
 
-    <main id="view-dashboard" class="max-w-[1800px] mx-auto grid grid-cols-12 gap-6 h-[750px]">
+    <main id="view-dashboard" class="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px]">
         
-        <div class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+        <div class="col-span-1 lg:col-span-3 flex flex-col gap-6">
             <section class="glass p-6">
                 <h2 class="text-cyan-400 font-bold uppercase text-xs mb-4 flex items-center gap-2 italic tracking-widest"><i data-lucide="upload-cloud" class="w-4"></i> Configurar Alerta</h2>
                 <div class="flex bg-black/40 p-1 rounded-lg border border-zinc-800 mb-4">
@@ -232,28 +230,28 @@
                     <button id="btn-save-action" class="w-full bg-white text-black font-black py-3 rounded-xl text-xs uppercase hover:bg-cyan-500 transition-all shadow-lg">Guardar y Vincular</button>
                 </div>
             </section>
-            <section class="glass flex-1 p-6 flex flex-col overflow-hidden">
+            <section class="glass flex-1 p-6 flex flex-col overflow-hidden min-h-[250px] lg:min-h-0">
                 <h2 class="text-purple-400 font-bold uppercase text-xs mb-4 italic tracking-widest">Eventos Activos</h2>
                 <div id="actions-list" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
             </section>
         </div>
 
-        <div class="col-span-12 lg:col-span-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="glass flex flex-col overflow-hidden">
+        <div class="col-span-1 lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div class="p-4 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-purple-400"><i data-lucide="message-square" class="inline w-3 mr-1"></i> CHAT (ÚLTIMOS 10)</div>
                 <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
             </div>
-            <div class="glass flex flex-col overflow-hidden">
+            <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full">
                 <div class="p-4 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-green-400"><i data-lucide="gift" class="inline w-3 mr-1"></i> REGALOS (ÚLTIMOS 10)</div>
                 <div id="gift-container" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
             </div>
-            <div class="glass flex flex-col overflow-hidden">
+            <div class="glass flex flex-col overflow-hidden h-[300px] lg:h-full sm:col-span-2 md:col-span-1">
                 <div class="p-4 border-b border-zinc-900 bg-black/20 text-xs font-bold tracking-widest italic text-red-500"><i data-lucide="flame" class="inline w-3 mr-1"></i> TOP LIKES</div>
                 <div id="ranking-container" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
             </div>
         </div>
 
-        <div class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+        <div class="col-span-1 lg:col-span-3 flex flex-col gap-6">
             <section class="glass p-6">
                 <h2 class="text-xs font-bold uppercase mb-4 text-zinc-500 italic">Controles Maestro</h2>
                 <div class="space-y-6">
@@ -299,7 +297,7 @@
                 </div>
             </section>
             
-            <section class="glass flex flex-col flex-1 overflow-hidden">
+            <section class="glass flex flex-col flex-1 overflow-hidden min-h-[200px] lg:min-h-0">
                 <div class="p-4 border-b border-zinc-900 bg-black/20 text-center">
                     <h2 class="text-xs font-bold uppercase tracking-widest italic text-zinc-500">Historial de Sesión</h2>
                 </div>
@@ -308,9 +306,9 @@
         </div>
     </main>
 
-    <main id="view-game" class="hidden max-w-[1800px] mx-auto grid grid-cols-12 gap-6 h-[750px]">
+    <main id="view-game" class="hidden max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px]">
         
-        <div class="col-span-12 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group">
+        <div class="col-span-1 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group h-[500px] lg:h-auto">
             <div class="absolute inset-0 border-2 border-cyan-500/20 rounded-xl pointer-events-none z-10 group-hover:border-cyan-500/50 transition-colors"></div>
             
             <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
@@ -319,31 +317,31 @@
 
             <div class="flex-1 w-full h-full relative" id="canvas-wrapper">
                 
-                <div id="arena-timer">03:00</div>
+                <div id="arena-timer" class="text-4xl md:text-5xl lg:text-6xl">03:00</div>
                 <canvas id="game-canvas"></canvas>
 
-                <div id="start-match-overlay">
-                    <h2 class="text-4xl font-black italic text-white mb-2 uppercase tracking-widest">Sala de Espera</h2>
-                    <p class="text-cyan-400 mb-8 uppercase text-xs tracking-[5px] font-bold">Las bolas no se hacen daño aún</p>
-                    <button id="btn-start-match" onclick="startMatch()" class="btn-start px-12 py-5 rounded-2xl font-black text-3xl uppercase tracking-widest cursor-pointer">
+                <div id="start-match-overlay" class="p-4 text-center">
+                    <h2 class="text-2xl md:text-4xl font-black italic text-white mb-2 uppercase tracking-widest">Sala de Espera</h2>
+                    <p class="text-cyan-400 mb-8 uppercase text-[10px] md:text-xs tracking-[2px] md:tracking-[5px] font-bold">Las bolas no se hacen daño aún</p>
+                    <button id="btn-start-match" onclick="startMatch()" class="btn-start px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-xl md:text-3xl uppercase tracking-widest cursor-pointer">
                         Iniciar Batalla
                     </button>
                 </div>
 
-                <div id="end-match-overlay">
-                    <h2 class="text-6xl font-black italic text-cyan-400 mb-8 uppercase tracking-widest" style="text-shadow: 0 0 30px rgba(0,255,255,0.4);">¡FIN DE LA RONDA!</h2>
-                    <div id="top-3-container" class="flex flex-col gap-4 mb-10 w-full max-w-2xl"></div>
+                <div id="end-match-overlay" class="p-4 text-center">
+                    <h2 class="text-3xl md:text-6xl font-black italic text-cyan-400 mb-4 md:mb-8 uppercase tracking-widest" style="text-shadow: 0 0 30px rgba(0,255,255,0.4);">¡FIN DE LA RONDA!</h2>
+                    <div id="top-3-container" class="flex flex-col gap-2 md:gap-4 mb-6 md:mb-10 w-full max-w-2xl"></div>
                     <div class="flex flex-col items-center">
-                        <p class="text-xl text-zinc-400 font-bold uppercase tracking-widest">Preparando nueva sala en</p>
-                        <span id="restart-countdown" class="text-red-500 text-6xl font-black mt-2 drop-shadow-lg">5</span>
+                        <p class="text-sm md:text-xl text-zinc-400 font-bold uppercase tracking-widest">Preparando nueva sala en</p>
+                        <span id="restart-countdown" class="text-red-500 text-4xl md:text-6xl font-black mt-2 drop-shadow-lg">5</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-span-12 lg:col-span-3 flex flex-col gap-6">
+        <div class="col-span-1 lg:col-span-3 flex flex-col gap-6">
             
-            <div class="glass flex-1 flex flex-col overflow-hidden relative">
+            <div class="glass flex-1 flex flex-col overflow-hidden relative min-h-[300px] lg:min-h-0">
                 <div class="p-4 border-b border-zinc-900 bg-gradient-to-r from-black/60 to-transparent flex justify-between items-center z-10">
                     <h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-sm"><i data-lucide="crown" class="inline w-4 mr-1 pb-1"></i> Top Dominantes</h2>
                     <span id="player-count" class="text-[10px] text-zinc-500 font-mono">0 Luchadores</span>
@@ -481,7 +479,6 @@
 
         document.getElementById('btn-disconnect').onclick = () => { socket.emit("stopConnection"); };
 
-        // === LÓGICA DE INFO DEL HOST ===
         socket.on("status", (status) => {
             document.getElementById('loader').style.display = 'none';
             const sText = document.getElementById('connection-status');
@@ -503,20 +500,18 @@
                 document.getElementById('btn-connect').classList.remove('hidden');
                 document.getElementById('btn-disconnect').classList.add('hidden');
                 
-                // Vuelve a su estado por defecto
                 hostAvatar.src = "/Logo.png";
                 hostAvatar.classList.remove('border-cyan-500', 'shadow-[0_0_15px_rgba(0,255,255,0.4)]');
                 hostTitle.innerHTML = `NEXORA <span class="text-cyan-500">ULTRA</span>`;
             }
         });
 
-        // Cambia el título de "NEXORA ULTRA" por la Foto y Nombre de TikTok
         socket.on("connectedUserData", (data) => {
             if(data.profilePictureUrl) {
                 document.getElementById('host-avatar').src = data.profilePictureUrl;
             }
             if(data.username) {
-                document.getElementById('host-title').innerHTML = `${data.username} <span class="text-cyan-500 text-lg">LIVE</span>`;
+                document.getElementById('host-title').innerHTML = `${data.username} <span class="text-cyan-500 text-sm md:text-lg">LIVE</span>`;
             }
         });
 
@@ -615,21 +610,21 @@
             const labels = ['ORO', 'PLATA', 'BRONCE'];
             
             if (sorted.length === 0) {
-                container.innerHTML = '<p class="text-center text-zinc-400 italic text-2xl">Nadie participó en esta ronda...</p>';
+                container.innerHTML = '<p class="text-center text-zinc-400 italic text-xl md:text-2xl">Nadie participó en esta ronda...</p>';
             } else {
                 sorted.forEach((b, i) => {
                     const avatarSrc = b.avatarLoaded ? b.avatar.src : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(b.username)}`;
                     container.innerHTML += `
-                        <div class="top-winner ${medals[i]} flex items-center justify-between p-4 rounded-xl">
-                            <div class="flex items-center gap-6">
-                                <div class="flex flex-col items-center justify-center w-12">
-                                    <span class="text-4xl font-black leading-none" style="color: ${colors[i]}">#${i+1}</span>
-                                    <span class="text-[10px] font-bold uppercase tracking-widest mt-1" style="color: ${colors[i]}">${labels[i]}</span>
+                        <div class="top-winner ${medals[i]} flex items-center justify-between p-2 md:p-4 rounded-xl">
+                            <div class="flex items-center gap-3 md:gap-6">
+                                <div class="flex flex-col items-center justify-center w-8 md:w-12">
+                                    <span class="text-2xl md:text-4xl font-black leading-none" style="color: ${colors[i]}">#${i+1}</span>
+                                    <span class="text-[8px] md:text-[10px] font-bold uppercase tracking-widest mt-1" style="color: ${colors[i]}">${labels[i]}</span>
                                 </div>
-                                <img src="${avatarSrc}" class="w-16 h-16 rounded-full border-4" style="border-color: ${colors[i]}">
-                                <span class="text-3xl font-bold text-white truncate max-w-[200px]">${b.username}</span>
+                                <img src="${avatarSrc}" class="w-10 h-10 md:w-16 md:h-16 rounded-full border-2 md:border-4" style="border-color: ${colors[i]}">
+                                <span class="text-xl md:text-3xl font-bold text-white truncate max-w-[120px] md:max-w-[200px]">${b.username}</span>
                             </div>
-                            <span class="text-4xl font-black text-green-400 drop-shadow-md">${Math.floor(b.power)} <span class="text-xl">pts</span></span>
+                            <span class="text-2xl md:text-4xl font-black text-green-400 drop-shadow-md">${Math.floor(b.power)} <span class="text-sm md:text-xl">pts</span></span>
                         </div>
                     `;
                 });
@@ -910,7 +905,7 @@
             balls.get(username).addPower(powerToAdd);
         }
 
-        // --- EVENTOS SOCKET (AQUÍ SE LIMITAN LAS LISTAS A 10 ELEMENTOS) ---
+        // --- EVENTOS SOCKET ---
         
         socket.on("actionsUpdated", (actions) => {
             document.getElementById('actions-list').innerHTML = actions.map((a, i) => `
@@ -964,7 +959,7 @@
             const chatContainer = document.getElementById('chat-container');
             chatContainer.prepend(div);
             
-            // LIMITADOR A 10 MENSAJES DE CHAT
+            // LÍMITE DE 10 MENSAJES EN CHAT
             if (chatContainer.children.length > 10) {
                 chatContainer.removeChild(chatContainer.lastElementChild);
             }
@@ -989,7 +984,7 @@
             const giftContainer = document.getElementById('gift-container');
             giftContainer.prepend(div);
             
-            // LIMITADOR A 10 REGALOS VISUALES
+            // LÍMITE DE 10 MENSAJES EN REGALOS
             if (giftContainer.children.length > 10) {
                 giftContainer.removeChild(giftContainer.lastElementChild);
             }
@@ -999,7 +994,6 @@
             const histContainer = document.getElementById('gift-history');
             if(histContainer) {
                 histContainer.prepend(hist);
-                // LIMITADOR DE HISTORIAL (dejamos 30 por ser texto pequeño)
                 if (histContainer.children.length > 30) {
                     histContainer.removeChild(histContainer.lastElementChild);
                 }
@@ -1017,4 +1011,5 @@
 
     </script>
 </body>
+</html>
 </html>
