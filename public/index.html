@@ -205,7 +205,6 @@
                     document.getElementById('game-canvas').style.background = 'transparent';
                     document.getElementById('game-canvas').style.boxShadow = 'none';
                     document.getElementById('sidebar-game').style.display = 'none';
-                    const copyBtn = document.getElementById('btn-copy-arena'); if(copyBtn) copyBtn.style.display = 'none';
                 } 
                 else if (overlayType === 'race') {
                     const view = document.getElementById('view-race');
@@ -216,7 +215,6 @@
                     document.getElementById('race-canvas').style.background = 'transparent';
                     document.getElementById('race-canvas').style.boxShadow = 'none';
                     document.getElementById('sidebar-race').style.display = 'none';
-                    const copyBtn = document.getElementById('btn-copy-race'); if(copyBtn) copyBtn.style.display = 'none';
                 }
                 else if (['chat', 'gifts', 'likes', 'donators', 'arena_dom', 'arena_don', 'arena_kil', 'arena_win', 'race_pos', 'race_win'].includes(overlayType)) {
                     const widgetContainer = document.createElement('div');
@@ -383,7 +381,7 @@
             
             <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
                 <span class="bg-black/80 text-cyan-400 text-[10px] font-black px-3 py-1.5 rounded-full border border-cyan-500/30 tracking-widest uppercase shadow-[0_0_10px_rgba(0,255,255,0.2)]">Arena Activa</span>
-                <button id="btn-copy-arena" onclick="copyOverlayUrl('arena')" class="btn-copy-link flex items-center justify-center bg-black/80 pointer-events-auto" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
+                <button onclick="copyOverlayUrl('arena')" class="btn-copy-link flex items-center justify-center bg-black/80 pointer-events-auto" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
             </div>
             
             <div class="flex-1 w-full h-full relative" id="canvas-wrapper">
@@ -409,7 +407,7 @@
             <div class="glass p-4 h-auto flex flex-col gap-2 border border-purple-900/30 flex-shrink-0">
                 <h2 class="text-xs font-bold uppercase text-purple-500 italic tracking-widest mb-1 border-b border-purple-900/50 pb-2"><i data-lucide="zap" class="inline w-3 mr-1"></i> Ajustes de Poderes</h2>
                 <details class="bg-black/40 rounded border border-zinc-800 p-2"><summary class="text-[10px] text-cyan-400 uppercase font-bold cursor-pointer outline-none flex items-center justify-between">1. Furia Rápida <i data-lucide="chevron-down" class="w-3 h-3"></i></summary><div class="pt-2 mt-2 border-t border-zinc-800 space-y-2"><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Costo (Diamantes)</span><input type="number" id="p-fury-cost" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Duración (seg)</span><input type="number" id="p-fury-dur" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Velocidad (x)</span><input type="number" id="p-fury-spd" class="cfg-input w-12" step="0.5" oninput="updatePowersCfg()"></div><button onclick="simulatePower('fury')" class="btn-sim w-full mt-1">Simular Poder</button></div></details>
-                <details class="bg-black/40 rounded border border-zinc-800 p-2"><summary class="text-[10px] text-red-500 uppercase font-bold cursor-pointer outline-none flex items-center justify-between">2. Escudo Picos <i data-lucide="chevron-down" class="w-3 h-3"></i></summary><div class="pt-2 mt-2 border-t border-zinc-800 space-y-2"><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Costo (Diamantes)</span><input type="number" id="p-spikes-cost" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Duración (seg)</span><input type="number" id="p-spikes-dur" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Multiplicador Robo (x)</span><input type="number" id="p-spikes-stl" class="cfg-input w-12" step="1" oninput="updatePowersCfg()"></div><button onclick="simulatePower('spikes')" class="btn-sim w-full mt-1">Simular Poder</button></div></details>
+                <details class="bg-black/40 rounded border border-zinc-800 p-2"><summary class="text-[10px] text-red-500 uppercase font-bold cursor-pointer outline-none flex items-center justify-between">2. Escudo Picos <i data-lucide="chevron-down" class="w-3 h-3"></i></summary><div class="pt-2 mt-2 border-t border-zinc-800 space-y-2"><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Costo (Diamantes)</span><input type="number" id="p-spikes-cost" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Duración (seg)</span><input type="number" id="p-spikes-dur" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Mult. Robo (x)</span><input type="number" id="p-spikes-stl" class="cfg-input w-12" step="1" oninput="updatePowersCfg()"></div><button onclick="simulatePower('spikes')" class="btn-sim w-full mt-1">Simular Poder</button></div></details>
                 <details class="bg-black/40 rounded border border-zinc-800 p-2"><summary class="text-[10px] text-purple-400 uppercase font-bold cursor-pointer outline-none flex items-center justify-between">3. Agujero Negro <i data-lucide="chevron-down" class="w-3 h-3"></i></summary><div class="pt-2 mt-2 border-t border-zinc-800 space-y-2"><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Costo (Diamantes)</span><input type="number" id="p-hole-cost" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Duración (seg)</span><input type="number" id="p-hole-dur" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Radio Atracción</span><input type="number" id="p-hole-rad" class="cfg-input w-12" step="50" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Fuerza Gravedad</span><input type="number" id="p-hole-frc" class="cfg-input w-12" step="0.5" oninput="updatePowersCfg()"></div><button onclick="simulatePower('blackhole')" class="btn-sim w-full mt-1">Simular Poder</button></div></details>
                 <details class="bg-black/40 rounded border border-zinc-800 p-2"><summary class="text-[10px] text-yellow-400 uppercase font-bold cursor-pointer outline-none flex items-center justify-between">4. Modo Gigante <i data-lucide="chevron-down" class="w-3 h-3"></i></summary><div class="pt-2 mt-2 border-t border-zinc-800 space-y-2"><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Costo (Diamantes)</span><input type="number" id="p-giant-cost" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Duración (seg)</span><input type="number" id="p-giant-dur" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Aumento Tamaño (x)</span><input type="number" id="p-giant-siz" class="cfg-input w-12" step="0.5" oninput="updatePowersCfg()"></div><button onclick="simulatePower('giant')" class="btn-sim w-full mt-1">Simular Poder</button></div></details>
                 <details class="bg-black/40 rounded border border-zinc-800 p-2"><summary class="text-[10px] text-orange-500 uppercase font-bold cursor-pointer outline-none flex items-center justify-between">5. Bomba Expansiva <i data-lucide="chevron-down" class="w-3 h-3"></i></summary><div class="pt-2 mt-2 border-t border-zinc-800 space-y-2"><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Costo (Diamantes)</span><input type="number" id="p-bomb-cost" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Duración (seg)</span><input type="number" id="p-bomb-dur" class="cfg-input w-12" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Radio Impacto</span><input type="number" id="p-bomb-rad" class="cfg-input w-12" step="50" oninput="updatePowersCfg()"></div><div class="flex justify-between items-center"><span class="text-[9px] text-zinc-400">Fuerza Empuje</span><input type="number" id="p-bomb-frc" class="cfg-input w-12" step="0.5" oninput="updatePowersCfg()"></div><button onclick="simulatePower('bomb')" class="btn-sim w-full mt-1">Simular Poder</button></div></details>
@@ -448,7 +446,7 @@
             
             <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
                 <span class="bg-black/80 text-red-500 text-[10px] font-black px-3 py-1.5 rounded-full border border-red-500/50 tracking-widest uppercase shadow-[0_0_10px_rgba(255,49,49,0.2)]"><i data-lucide="skull" class="inline w-3 mr-1 pb-0.5"></i> Carrera Activa</span>
-                <button id="btn-copy-race" onclick="copyOverlayUrl('race')" class="btn-copy-link btn-copy-link-red flex items-center justify-center bg-black/80 pointer-events-auto" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
+                <button onclick="copyOverlayUrl('race')" class="btn-copy-link btn-copy-link-red flex items-center justify-center bg-black/80 pointer-events-auto" title="Copiar URL para OBS"><i data-lucide="link" class="w-3 h-3"></i></button>
             </div>
             
             <div class="flex-1 w-full h-full relative" id="canvas-wrapper-race">
@@ -544,6 +542,16 @@
                     </select>
                 </div>
 
+                <div class="pt-2 pb-2 border-t border-red-900/50 mt-2">
+                    <label class="text-[10px] text-zinc-400 uppercase block font-bold mb-2">¿Quién aparece en la pista?</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="jc-member" checked onchange="updateRaceSettings()" class="accent-red-500 w-3 h-3"> <span class="text-[9px] uppercase font-bold text-zinc-300">Unirse al Live</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="jc-like" checked onchange="updateRaceSettings()" class="accent-red-500 w-3 h-3"> <span class="text-[9px] uppercase font-bold text-zinc-300">Dar Tap Tap</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="jc-gift" checked onchange="updateRaceSettings()" class="accent-red-500 w-3 h-3"> <span class="text-[9px] uppercase font-bold text-zinc-300">Donar Regalo</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="jc-chat" onchange="updateRaceSettings()" class="accent-red-500 w-3 h-3"> <span class="text-[9px] uppercase font-bold text-zinc-300">Comentar</span></label>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Velocidad que se pierde con el tiempo">Fricción Pista</span><input type="number" id="cfg-race-friction" value="0.98" min="0.80" max="0.99" step="0.01" class="cfg-input cfg-input-red"></div>
                 <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Velocidad por 1 unidad de regalo">Velocidad x Regalo</span><input type="number" id="cfg-race-gift" value="50" min="1" class="cfg-input cfg-input-red"></div>
                 <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold" title="Velocidad por Tap Tap">Velocidad x Like</span><input type="number" id="cfg-race-like" value="5" min="1" class="cfg-input cfg-input-red"></div>
@@ -573,7 +581,6 @@
         const giftersSet = new Set();
         let currentActiveGame = 'arena'; 
 
-        // LÓGICA DE FORMATO DE PANTALLA (9:16 vs FULL)
         function setCanvasFormat(format) {
             const btnFull = document.getElementById('btn-fmt-full');
             const btn916 = document.getElementById('btn-fmt-916');
@@ -592,7 +599,6 @@
             setTimeout(resizeCanvas, 50); 
         }
 
-        // ESTADÍSTICAS PERSISTENTES (KILLS / WINS)
         const persistentStats = new Map();
         const persistentRaceWins = new Map();
 
@@ -658,7 +664,6 @@
             }).catch(err => alert('Hubo un error al copiar. Copia manualmente esta URL:\n' + url));
         }
 
-        // --- SISTEMA TTS Y VOLUMEN ---
         const synth = window.speechSynthesis; let voices = [];
         function loadVoices() { voices = synth.getVoices(); const voiceSelect = document.getElementById('tts-voice'); if(voiceSelect) voiceSelect.innerHTML = voices.map((v, i) => `<option value="${i}" ${v.lang.includes('es') ? 'selected' : ''}>${v.name}</option>`).join(''); }
         speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
@@ -675,7 +680,6 @@
         const volInput = document.getElementById('tts-volume');
         if(volInput) volInput.oninput = (e) => document.getElementById('vol-perc').innerText = Math.round(e.target.value * 100) + "%";
 
-        // --- TABS Y VISTAS ---
         function showTab(tab) {
             if(isOverlay) return;
             document.getElementById('view-dashboard').classList.toggle('hidden', tab !== 'dashboard');
@@ -765,10 +769,6 @@
             if(data.username) document.getElementById('host-title').innerHTML = `${data.username} <span class="text-cyan-500 text-sm md:text-lg">LIVE</span>`;
         });
 
-
-        /* ==========================================================================
-           CONFIGURACIONES AVANZADAS DE PODERES (ARENA Y CARRERA)
-           ========================================================================== */
         const powersCfg = {
             fury: { cost: 1, duration: 10, speedMult: 2.0 },
             spikes: { cost: 10, duration: 15, stealMult: 3 },
@@ -789,7 +789,10 @@
         };
 
         const arenaCfg = { initialPower: 50, baseSpeed: 4, stealPercent: 0.05, giftMultiplier: 100, matchTimeMin: 3, forceEnd: 0 };
-        const raceCfg = { mode: 'likes_gifts', matchTimeMin: 3, friction: 0.98, giftMult: 50, likeMult: 5, forceEnd: 0, deathZoneEnabled: true };
+        const raceCfg = { 
+            mode: 'likes_gifts', matchTimeMin: 3, friction: 0.98, giftMult: 50, likeMult: 5, forceEnd: 0, deathZoneEnabled: true,
+            joinConditions: { member: true, like: true, gift: true, chat: false } 
+        };
 
         function updatePowersCfg() {
             if(isOverlay) return;
@@ -811,7 +814,6 @@
             powersRaceCfg.boost4.cost = Number(document.getElementById('rp-b4-cost').value); powersRaceCfg.boost4.dur = Number(document.getElementById('rp-b4-dur').value);
             
             powersRaceCfg.shield.cost = Number(document.getElementById('rp-shield-cost').value); powersRaceCfg.shield.dur = Number(document.getElementById('rp-shield-dur').value);
-            
             powersRaceCfg.cannon.cost = Number(document.getElementById('rp-can-cost').value); powersRaceCfg.cannon.count = Number(document.getElementById('rp-can-cnt').value); powersRaceCfg.cannon.penalty = Number(document.getElementById('rp-can-dmg').value);
             broadcastConfig();
         }
@@ -820,12 +822,19 @@
             if(isOverlay) return;
             const rDz = document.getElementById('cfg-race-deathzone');
             if(rDz) raceCfg.deathZoneEnabled = rDz.checked;
+
+            const jcMember = document.getElementById('jc-member');
+            if(jcMember) {
+                raceCfg.joinConditions.member = jcMember.checked;
+                raceCfg.joinConditions.like = document.getElementById('jc-like').checked;
+                raceCfg.joinConditions.gift = document.getElementById('jc-gift').checked;
+                raceCfg.joinConditions.chat = document.getElementById('jc-chat').checked;
+            }
             broadcastConfig();
         }
 
         document.addEventListener("DOMContentLoaded", () => {
             if(!isOverlay) {
-                // Set Arena defaults
                 document.getElementById('p-fury-cost').value = powersCfg.fury.cost; document.getElementById('p-fury-dur').value = powersCfg.fury.duration; document.getElementById('p-fury-spd').value = powersCfg.fury.speedMult;
                 document.getElementById('p-spikes-cost').value = powersCfg.spikes.cost; document.getElementById('p-spikes-dur').value = powersCfg.spikes.duration; document.getElementById('p-spikes-stl').value = powersCfg.spikes.stealMult;
                 document.getElementById('p-hole-cost').value = powersCfg.blackhole.cost; document.getElementById('p-hole-dur').value = powersCfg.blackhole.duration; document.getElementById('p-hole-rad').value = powersCfg.blackhole.radius; document.getElementById('p-hole-frc').value = powersCfg.blackhole.force;
@@ -834,7 +843,6 @@
                 document.getElementById('p-c1-cost').value = powersCfg.cannon1.cost; document.getElementById('p-c1-cnt').value = powersCfg.cannon1.count; document.getElementById('p-c1-dmg').value = powersCfg.cannon1.damage; document.getElementById('p-c1-spd').value = powersCfg.cannon1.speedBase;
                 document.getElementById('p-c2-cost').value = powersCfg.cannon2.cost; document.getElementById('p-c2-cnt').value = powersCfg.cannon2.count; document.getElementById('p-c2-dmg').value = powersCfg.cannon2.damage; document.getElementById('p-c2-spd').value = powersCfg.cannon2.speedBase;
 
-                // Set Race defaults
                 document.getElementById('rp-b1-cost').value = powersRaceCfg.boost1.cost; document.getElementById('rp-b1-dur').value = powersRaceCfg.boost1.dur;
                 document.getElementById('rp-b2-cost').value = powersRaceCfg.boost2.cost; document.getElementById('rp-b2-dur').value = powersRaceCfg.boost2.dur;
                 document.getElementById('rp-b3-cost').value = powersRaceCfg.boost3.cost; document.getElementById('rp-b3-dur').value = powersRaceCfg.boost3.dur;
@@ -842,9 +850,16 @@
                 document.getElementById('rp-shield-cost').value = powersRaceCfg.shield.cost; document.getElementById('rp-shield-dur').value = powersRaceCfg.shield.dur;
                 document.getElementById('rp-can-cost').value = powersRaceCfg.cannon.cost; document.getElementById('rp-can-cnt').value = powersRaceCfg.cannon.count; document.getElementById('rp-can-dmg').value = powersRaceCfg.cannon.penalty;
 
-                // Death Zone Setting
                 const rDz = document.getElementById('cfg-race-deathzone');
                 if(rDz) rDz.checked = raceCfg.deathZoneEnabled;
+
+                const jcMember = document.getElementById('jc-member');
+                if(jcMember) {
+                    jcMember.checked = raceCfg.joinConditions.member;
+                    document.getElementById('jc-like').checked = raceCfg.joinConditions.like;
+                    document.getElementById('jc-gift').checked = raceCfg.joinConditions.gift;
+                    document.getElementById('jc-chat').checked = raceCfg.joinConditions.chat;
+                }
             }
         });
 
@@ -1000,7 +1015,6 @@
                 gameStateRace = 'ended'; clearInterval(matchIntervalRace);
                 if(!isOverlay && currentActiveGame === 'race') speak("Mostrando ganadores de la carrera.");
                 
-                // Excluir muertos de la premiación
                 const sorted = Array.from(racers.values()).filter(r => !r.isDead).sort((a, b) => b.distance - a.distance).slice(0, 3);
                 
                 if (sorted.length > 0 && sorted[0].distance > 0) { initRaceStat(sorted[0].username); persistentRaceWins.get(sorted[0].username).wins++; updateRaceWinsLeaderboard(); }
@@ -1029,9 +1043,6 @@
             }
         }
 
-        /* ==========================================================================
-           SIMULACIÓN DE PODERES
-           ========================================================================== */
         const cannonballs = [];
         function shootCannon(ball, cannonType) {
             const cfg = powersCfg[cannonType]; 
@@ -1510,15 +1521,21 @@
 
         function handleRaceInteraction(username, type, amount, avatarUrl) {
             if (gameStateRace !== 'playing') return;
+            
+            if (!racers.has(username)) {
+                if (!raceCfg.joinConditions || !raceCfg.joinConditions[type]) return; 
+                racers.set(username, new Racer(username, avatarUrl));
+            }
+
+            const racer = racers.get(username);
+            if(racer.isDead) return; 
+
             const mode = raceCfg.mode; let isValid = false;
             if(mode === 'all') isValid = true;
             if(mode === 'likes_gifts' && (type === 'like' || type === 'gift')) isValid = true;
             if(mode === 'gifts' && type === 'gift') isValid = true;
-            if(!isValid) return;
-
-            if (!racers.has(username)) racers.set(username, new Racer(username, avatarUrl));
-            const racer = racers.get(username);
-            if(racer.isDead) return; 
+            
+            if(!isValid || amount === 0) return;
 
             let speedBoost = 0;
             if(type === 'gift') speedBoost = amount * raceCfg.giftMult;
@@ -1552,6 +1569,7 @@
 
         socket.on("member", (data) => {
             handleArenaInteraction(data.user, 0, data.avatar); 
+            handleRaceInteraction(data.user, 'member', 0, data.avatar);
         });
 
         socket.on("singleLike", (data) => { 
@@ -1654,7 +1672,6 @@
             
             const diamondValue = data.diamondCount || data.diamonds || data.diamond_value || data.amount;
 
-            // PODERES ARENA
             const ball = balls.get(data.user);
             if(ball && gameStateArena === 'playing') {
                 ball.auraTimer = 3000;
@@ -1667,7 +1684,6 @@
                 else if (diamondValue >= powersCfg.fury.cost) { ball.triggerFury(powersCfg.fury.duration * 1000); floatingTextsArena.push({ x: ball.x, y: ball.y - 20, text: "¡FURIA!", color: "#00FFFF", life: 1.0, vy: -1.5 }); }
             }
 
-            // PODERES CARRERA
             const racer = racers.get(data.user);
             if(racer && gameStateRace === 'playing' && !racer.isDead) {
                 if (diamondValue >= powersRaceCfg.cannon.cost) { shootRaceCannon(racer); }
