@@ -119,14 +119,18 @@
         .race-timer { color: var(--red); text-shadow: 0 0 20px rgba(255, 49, 49, 0.5); }
 
         .arena-overlay-panel {
-            position: absolute; top: 20px; width: 250px; max-height: calc(100% - 40px);
+            position: absolute; width: 220px; max-height: calc(100% - 40px);
             background: rgba(10, 10, 15, 0.7); backdrop-filter: blur(8px);
             border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);
             z-index: 15; pointer-events: none; overflow: hidden; display: flex; flex-direction: column;
+            transition: opacity 0.3s;
         }
-        .arena-overlay-left { left: 20px; border-left: 2px solid var(--cyan); }
-        .arena-overlay-right { right: 20px; border-right: 2px solid var(--gold); }
-        .race-overlay-left { left: 20px; border-left: 2px solid var(--red); }
+        .arena-overlay-left { left: 20px; top: 20px; border-left: 2px solid var(--cyan); }
+        .arena-overlay-right { right: 20px; top: 20px; border-right: 2px solid var(--gold); }
+        .arena-overlay-bottom-left { left: 20px; bottom: 20px; border-left: 2px solid var(--red); max-height: 180px; }
+        .arena-overlay-bottom-right { right: 20px; bottom: 20px; border-right: 2px solid var(--purple); max-height: 180px; }
+        
+        .race-overlay-left { left: 20px; top: 20px; border-left: 2px solid var(--red); }
 
         .match-overlay {
             position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
@@ -180,7 +184,6 @@
                 const ttsCheckbox = document.getElementById('tts-enabled');
                 if(ttsCheckbox) ttsCheckbox.checked = false; 
 
-                // --- OVERLAY: ARENA ---
                 if (overlayType === 'arena') {
                     const view = document.getElementById('view-game');
                     view.style.display = 'block'; view.className = 'w-screen h-screen m-0 p-0 block'; 
@@ -192,7 +195,6 @@
                     document.getElementById('sidebar-game').style.display = 'none';
                     const copyBtn = document.getElementById('btn-copy-arena'); if(copyBtn) copyBtn.style.display = 'none';
                 } 
-                // --- OVERLAY: CARRERA DE LA MUERTE ---
                 else if (overlayType === 'race') {
                     const view = document.getElementById('view-race');
                     view.style.display = 'block'; view.className = 'w-screen h-screen m-0 p-0 block'; 
@@ -204,10 +206,9 @@
                     document.getElementById('sidebar-race').style.display = 'none';
                     const copyBtn = document.getElementById('btn-copy-race'); if(copyBtn) copyBtn.style.display = 'none';
                 }
-                // --- OVERLAY: WIDGETS ---
-                else if (['chat', 'gifts', 'likes', 'donators'].includes(overlayType)) {
+                else if (['chat', 'gifts', 'likes', 'donators', 'arena_dom', 'arena_don', 'arena_kil', 'arena_win'].includes(overlayType)) {
                     const widgetContainer = document.createElement('div');
-                    widgetContainer.className = 'w-full h-full p-4 flex flex-col justify-start overflow-hidden bg-transparent';
+                    widgetContainer.className = 'w-full h-full p-2 flex flex-col justify-start overflow-hidden bg-transparent';
                     document.body.appendChild(widgetContainer);
 
                     let targetId = '';
@@ -215,10 +216,26 @@
                     if (overlayType === 'gifts') targetId = 'gift-container';
                     if (overlayType === 'likes') targetId = 'ranking-container';
                     if (overlayType === 'donators') targetId = 'donators-container';
+                    if (overlayType === 'arena_dom') targetId = 'panel-dom';
+                    if (overlayType === 'arena_don') targetId = 'panel-don';
+                    if (overlayType === 'arena_kil') targetId = 'panel-kil';
+                    if (overlayType === 'arena_win') targetId = 'panel-win';
                     
                     const targetEl = document.getElementById(targetId);
                     if(targetEl) {
-                        targetEl.className = 'w-full h-full overflow-hidden space-y-3 p-2';
+                        // Limpiar estilos para full screen widget
+                        targetEl.className = 'w-full h-full overflow-hidden flex flex-col bg-transparent';
+                        if (targetId.startsWith('panel')) {
+                            targetEl.style.position = 'relative'; targetEl.style.left = '0'; targetEl.style.top = '0'; 
+                            targetEl.style.right = 'auto'; targetEl.style.bottom = 'auto'; targetEl.style.width = '100%'; 
+                            targetEl.style.maxHeight = '100%'; targetEl.style.display = 'flex';
+                            
+                            // Estilo forzado de caja de cristal
+                            targetEl.style.background = 'rgba(10, 10, 15, 0.85)';
+                            targetEl.style.backdropFilter = 'blur(8px)';
+                            targetEl.style.borderRadius = '12px';
+                            targetEl.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+                        }
                         widgetContainer.appendChild(targetEl);
                     }
                     
@@ -226,10 +243,9 @@
                     style.innerHTML = `
                         .bg-zinc-900\\/50, .bg-green-900\\/20, .bg-black\\/40 {
                             background: rgba(10, 10, 15, 0.85) !important;
-                            border: 1px solid rgba(0, 255, 255, 0.2) !important;
+                            border: 1px solid rgba(255, 255, 255, 0.1) !important;
                             backdrop-filter: blur(8px) !important;
                             border-radius: 12px;
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
                         }
                     `;
                     document.head.appendChild(style);
@@ -366,9 +382,12 @@
             </div>
             
             <div class="flex-1 w-full h-full relative" id="canvas-wrapper">
+                
+                <div id="killfeed" class="absolute top-16 left-1/2 transform -translate-x-1/2 z-40 flex flex-col gap-1 pointer-events-none"></div>
+
                 <div id="arena-timer" class="game-timer text-4xl md:text-5xl lg:text-6xl">03:00</div>
                 
-                <div class="arena-overlay-panel arena-overlay-left hidden md:flex">
+                <div id="panel-dom" class="arena-overlay-panel arena-overlay-left hidden md:flex">
                     <div class="p-3 border-b border-zinc-800 bg-black/60 flex justify-between items-center">
                         <h2 class="text-cyan-400 font-black uppercase tracking-widest italic text-xs"><i data-lucide="crosshair" class="inline w-3 mr-1 pb-0.5"></i> Top Dominantes</h2>
                         <span id="player-count" class="text-[9px] text-zinc-400 font-mono">0</span>
@@ -376,11 +395,25 @@
                     <div id="arena-ranking" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
                 </div>
 
-                <div class="arena-overlay-panel arena-overlay-right hidden md:flex">
+                <div id="panel-don" class="arena-overlay-panel arena-overlay-right hidden md:flex">
                     <div class="p-3 border-b border-zinc-800 bg-black/60 flex justify-between items-center">
                         <h2 class="text-yellow-400 font-black uppercase tracking-widest italic text-xs"><i data-lucide="award" class="inline w-3 mr-1 pb-0.5"></i> Top Donadores</h2>
                     </div>
                     <div id="arena-donators" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                </div>
+
+                <div id="panel-kil" class="arena-overlay-panel arena-overlay-bottom-left hidden md:flex">
+                    <div class="p-3 border-b border-zinc-800 bg-black/60 flex justify-between items-center">
+                        <h2 class="text-red-500 font-black uppercase tracking-widest italic text-xs"><i data-lucide="crosshairs" class="inline w-3 mr-1 pb-0.5"></i> Top Kills</h2>
+                    </div>
+                    <div id="arena-kills" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                </div>
+
+                <div id="panel-win" class="arena-overlay-panel arena-overlay-bottom-right hidden md:flex">
+                    <div class="p-3 border-b border-zinc-800 bg-black/60 flex justify-between items-center">
+                        <h2 class="text-purple-400 font-black uppercase tracking-widest italic text-xs"><i data-lucide="trophy" class="inline w-3 mr-1 pb-0.5"></i> Top Wins</h2>
+                    </div>
+                    <div id="arena-wins" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
                 </div>
 
                 <canvas id="game-canvas"></canvas>
@@ -413,52 +446,31 @@
                 
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold">1. Furia Rápida</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" id="cfg-pow-1" value="1" min="1" class="cfg-input">
-                        <button onclick="simulatePower('fury')" class="btn-sim">Test</button>
-                    </div>
+                    <div class="flex items-center gap-1"><input type="number" id="cfg-pow-1" value="1" min="1" class="cfg-input"><button onclick="simulatePower('fury')" class="btn-sim">Test</button></div>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold">2. Escudo Picos</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" id="cfg-pow-2" value="10" min="1" class="cfg-input">
-                        <button onclick="simulatePower('spikes')" class="btn-sim">Test</button>
-                    </div>
+                    <div class="flex items-center gap-1"><input type="number" id="cfg-pow-2" value="10" min="1" class="cfg-input"><button onclick="simulatePower('spikes')" class="btn-sim">Test</button></div>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold">3. Agujero Negro</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" id="cfg-pow-3" value="99" min="1" class="cfg-input">
-                        <button onclick="simulatePower('blackhole')" class="btn-sim">Test</button>
-                    </div>
+                    <div class="flex items-center gap-1"><input type="number" id="cfg-pow-3" value="99" min="1" class="cfg-input"><button onclick="simulatePower('blackhole')" class="btn-sim">Test</button></div>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold">4. Modo Gigante</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" id="cfg-pow-4" value="299" min="1" class="cfg-input">
-                        <button onclick="simulatePower('giant')" class="btn-sim">Test</button>
-                    </div>
+                    <div class="flex items-center gap-1"><input type="number" id="cfg-pow-4" value="299" min="1" class="cfg-input"><button onclick="simulatePower('giant')" class="btn-sim">Test</button></div>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold">5. Bomba Expansiva</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" id="cfg-pow-5" value="1000" min="1" class="cfg-input">
-                        <button onclick="simulatePower('bomb')" class="btn-sim">Test</button>
-                    </div>
+                    <div class="flex items-center gap-1"><input type="number" id="cfg-pow-5" value="1000" min="1" class="cfg-input"><button onclick="simulatePower('bomb')" class="btn-sim">Test</button></div>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold">6. Cañón (50 Balas)</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" id="cfg-pow-6" value="100" min="1" class="cfg-input">
-                        <button onclick="simulatePower('cannon1')" class="btn-sim">Test</button>
-                    </div>
+                    <div class="flex items-center gap-1"><input type="number" id="cfg-pow-6" value="100" min="1" class="cfg-input"><button onclick="simulatePower('cannon1')" class="btn-sim">Test</button></div>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold">7. Cañón (100 Balas)</span>
-                    <div class="flex items-center gap-1">
-                        <input type="number" id="cfg-pow-7" value="200" min="1" class="cfg-input">
-                        <button onclick="simulatePower('cannon2')" class="btn-sim">Test</button>
-                    </div>
+                    <div class="flex items-center gap-1"><input type="number" id="cfg-pow-7" value="200" min="1" class="cfg-input"><button onclick="simulatePower('cannon2')" class="btn-sim">Test</button></div>
                 </div>
             </div>
 
@@ -469,6 +481,18 @@
                 <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold">Velocidad Base</span><input type="number" id="cfg-speed" value="4" min="1" max="20" class="cfg-input"></div>
                 <div class="flex items-center justify-between"><span class="text-[10px] text-zinc-400 uppercase font-bold">% Robo (Choque)</span><input type="number" id="cfg-steal" value="5" min="1" max="100" class="cfg-input"></div>
                 <div class="flex items-center justify-between"><span class="text-[10px] text-purple-400 uppercase font-bold">Poder x Regalo</span><input type="number" id="cfg-gift" value="100" min="10" class="cfg-input border-purple-500/50 text-purple-400"></div>
+                
+                <div class="pt-3 pb-2 border-t border-zinc-800 mt-3">
+                    <label class="text-[10px] text-zinc-400 uppercase block font-bold mb-2">Visibilidad de Paneles (Arena)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="toggle-p-dom" checked onchange="togglePanel('dom')" class="accent-cyan-500 w-3 h-3"> <span class="text-[10px] uppercase font-bold text-zinc-300">Dominantes</span> <button onclick="copyOverlayUrl('arena_dom'); event.preventDefault();" class="text-cyan-500 hover:text-white"><i data-lucide="link" class="w-3 h-3"></i></button></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="toggle-p-don" checked onchange="togglePanel('don')" class="accent-yellow-500 w-3 h-3"> <span class="text-[10px] uppercase font-bold text-zinc-300">Donadores</span> <button onclick="copyOverlayUrl('arena_don'); event.preventDefault();" class="text-yellow-500 hover:text-white"><i data-lucide="link" class="w-3 h-3"></i></button></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="toggle-p-kil" checked onchange="togglePanel('kil')" class="accent-red-500 w-3 h-3"> <span class="text-[10px] uppercase font-bold text-zinc-300">Top Kills</span> <button onclick="copyOverlayUrl('arena_kil'); event.preventDefault();" class="text-red-500 hover:text-white"><i data-lucide="link" class="w-3 h-3"></i></button></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="toggle-p-win" checked onchange="togglePanel('win')" class="accent-purple-500 w-3 h-3"> <span class="text-[10px] uppercase font-bold text-zinc-300">Top Wins</span> <button onclick="copyOverlayUrl('arena_win'); event.preventDefault();" class="text-purple-500 hover:text-white"><i data-lucide="link" class="w-3 h-3"></i></button></label>
+                    </div>
+                    <button onclick="resetStats()" class="mt-3 w-full bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white hover:bg-red-900/50 py-2 rounded text-[10px] uppercase font-bold tracking-widest transition-all">Reiniciar Historial Kills/Wins</button>
+                </div>
+
             </div>
         </div>
     </main>
@@ -548,6 +572,39 @@
         const donatorsMap = new Map();
         const giftersSet = new Set();
         let currentActiveGame = 'arena'; 
+
+        // ESTADÍSTICAS PERSISTENTES (KILLS / WINS)
+        const persistentStats = new Map();
+        function initStat(user) { if(!persistentStats.has(user)) persistentStats.set(user, {kills:0, wins:0}); }
+
+        function togglePanel(panel) {
+            const el = document.getElementById(`panel-${panel}`);
+            const cb = document.getElementById(`toggle-p-${panel}`);
+            if(el && cb) el.style.display = cb.checked ? 'flex' : 'none';
+        }
+
+        function resetStats() {
+            if(confirm("¿Seguro que deseas reiniciar los contadores de Kills y Wins?")) {
+                persistentStats.clear();
+                updateKillsLeaderboard();
+                updateWinsLeaderboard();
+                alert("Historial reiniciado correctamente.");
+            }
+        }
+
+        function showKillNotification(killer, killed) {
+            const feed = document.getElementById('killfeed');
+            if(!feed) return;
+            const el = document.createElement('div');
+            el.className = 'bg-black/80 border border-red-500 text-white text-[10px] md:text-xs px-4 py-1.5 rounded-full fade-in flex items-center gap-2 shadow-[0_0_15px_rgba(255,0,0,0.5)] transform transition-all duration-300';
+            el.innerHTML = `<span class="text-cyan-400 font-bold">${killer}</span> <i data-lucide="swords" class="w-3 h-3 text-red-500"></i> <span class="text-zinc-400 line-through">${killed}</span>`;
+            feed.appendChild(el);
+            lucide.createIcons();
+            setTimeout(() => { 
+                el.style.opacity = '0'; el.style.transform = 'translateY(-10px)'; 
+                setTimeout(()=>el.remove(), 300); 
+            }, 3000);
+        }
 
         function copyOverlayUrl(type) {
             const url = window.location.origin + '/?overlay=' + type;
@@ -742,7 +799,8 @@
                 gameStateArena = 'waiting';
                 const ovEnd = document.getElementById('end-match-overlay'); if(ovEnd) ovEnd.style.display = 'none';
                 const ovStart = document.getElementById('start-match-overlay'); if(ovStart) ovStart.style.display = 'flex';
-                updateLobbyTimer('arena'); balls.clear(); floatingTextsArena.length = 0; cannonballs.length = 0; if(!isOverlay) updateUILeaderboard();
+                updateLobbyTimer('arena'); balls.clear(); floatingTextsArena.length = 0; cannonballs.length = 0; 
+                if(!isOverlay) { updateUILeaderboard(); updateKillsLeaderboard(); updateWinsLeaderboard(); }
             } else {
                 gameStateRace = 'waiting';
                 const ovEnd = document.getElementById('end-race-overlay'); if(ovEnd) ovEnd.style.display = 'none';
@@ -817,6 +875,14 @@
                 if(!isOverlay && currentActiveGame === 'arena') speak("Mostrando ganadores de la arena.");
                 
                 const sorted = Array.from(balls.values()).sort((a, b) => b.power - a.power).slice(0, 3);
+                
+                // GUARDAR VICTORIA DEL #1
+                if (sorted.length > 0 && sorted[0].power > 0) {
+                    initStat(sorted[0].username);
+                    persistentStats.get(sorted[0].username).wins++;
+                    updateWinsLeaderboard();
+                }
+
                 const container = document.getElementById('top-3-container');
                 if(container) {
                     container.innerHTML = '';
@@ -877,13 +943,13 @@
         function shootCannon(ball, count) {
             for(let i=0; i<count; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const speed = 5 + Math.random() * 8; // Velocidad aleatoria
+                const speed = 5 + Math.random() * 8; 
                 cannonballs.push({
                     x: ball.x, y: ball.y,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     color: COLORS[Math.floor(Math.random() * COLORS.length)],
-                    life: 150 + Math.random() * 50 // Se desvanecen eventualmente
+                    life: 150 + Math.random() * 50 
                 });
             }
             floatingTextsArena.push({ x: ball.x, y: ball.y - 40, text: `¡CAÑÓN x${count}!`, color: "#FFD700", life: 1.0, vy: -2 });
@@ -894,12 +960,10 @@
            ========================================================================== */
         function simulatePower(powerName) {
             if(gameStateArena !== 'playing') return alert("La arena debe estar jugando para simular.");
-            if(balls.size === 0) handleArenaInteraction("PruebaBOT", 50, ""); // Crea un bot si está vacío
+            if(balls.size === 0) handleArenaInteraction("PruebaBOT", 50, ""); 
 
             const ballArray = Array.from(balls.values());
-            const target = ballArray[Math.floor(Math.random() * ballArray.length)]; // Elige a alguien al azar
-            
-            // Simular el Aura siempre que probamos
+            const target = ballArray[Math.floor(Math.random() * ballArray.length)]; 
             target.auraTimer = 3000;
 
             if (powerName === 'fury') {
@@ -946,12 +1010,12 @@
                 this.vx = (Math.random() - 0.5) * arenaCfg.baseSpeed; this.vy = (Math.random() - 0.5) * arenaCfg.baseSpeed;
                 this.color = COLORS[Math.floor(Math.random() * COLORS.length)]; this.isFurious = false; this.furyTimer = 0;
                 
-                // PODERES Y EFECTOS
                 this.likesCount = 0;
                 this.spikesAngle = 0;
-                this.activePower = null; // 'fury', 'spikes', 'blackhole', 'giant', 'bomb'
+                this.activePower = null; 
                 this.powerTimer = 0;
-                this.auraTimer = 0; // Efecto visual por donar
+                this.auraTimer = 0; 
+                this.isDead = false; // Flag para dar la kill solo una vez
                 
                 this.radius = this.calculateRadius(); 
                 
@@ -964,7 +1028,7 @@
             calculateRadius() { 
                 let r = BASE_RADIUS + Math.sqrt(Math.max(0, this.power)) * 2; 
                 if(this.isFurious) r += 20; 
-                if(this.activePower === 'giant') r *= 2; // Doble de grande
+                if(this.activePower === 'giant') r *= 2; 
                 return Math.min(r, MAX_RADIUS * (this.activePower === 'giant' ? 2 : 1)); 
             }
             
@@ -997,48 +1061,32 @@
             }
             
             draw(ctx) {
-                // AURA ÉPICA (Cuando dona)
                 if (this.auraTimer > 0) {
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius + 15 + Math.sin(Date.now()/50)*5, 0, Math.PI * 2);
-                    ctx.lineWidth = 6;
-                    ctx.strokeStyle = `hsl(${(Date.now()/5) % 360}, 100%, 60%)`; // Arcoiris rotando
-                    ctx.shadowBlur = 20; ctx.shadowColor = ctx.strokeStyle;
-                    ctx.stroke();
-                    ctx.restore();
+                    ctx.save(); ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 15 + Math.sin(Date.now()/50)*5, 0, Math.PI * 2);
+                    ctx.lineWidth = 6; ctx.strokeStyle = `hsl(${(Date.now()/5) % 360}, 100%, 60%)`;
+                    ctx.shadowBlur = 20; ctx.shadowColor = ctx.strokeStyle; ctx.stroke(); ctx.restore();
                 }
 
-                // AURA BOMBA EXPANSIVA
                 if (this.activePower === 'bomb') {
                     ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 30 + Math.sin(Date.now()/100)*10, 0, Math.PI * 2);
                     ctx.strokeStyle = 'rgba(255, 49, 49, 0.8)'; ctx.lineWidth = 4; ctx.stroke();
                 }
 
-                // AURA AGUJERO NEGRO
                 if (this.activePower === 'blackhole') {
                     ctx.beginPath(); ctx.arc(this.x, this.y, this.radius + 20, 0, Math.PI * 2);
                     ctx.strokeStyle = 'rgba(138, 43, 226, 0.8)'; ctx.lineWidth = 4; ctx.stroke();
                 }
 
-                // ESCUDO DE PICOS
                 if (this.activePower === 'spikes') {
-                    ctx.save();
-                    ctx.translate(this.x, this.y);
-                    ctx.rotate(this.spikesAngle);
+                    ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.spikesAngle);
                     ctx.fillStyle = '#FF3131'; 
                     for (let i = 0; i < 6; i++) {
-                        ctx.beginPath();
-                        ctx.moveTo(0, -this.radius - 5);
-                        ctx.lineTo(-15, -this.radius - 25);
-                        ctx.lineTo(15, -this.radius - 25);
-                        ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(0, -this.radius - 5); ctx.lineTo(-15, -this.radius - 25); ctx.lineTo(15, -this.radius - 25); ctx.fill();
                         ctx.rotate(Math.PI / 3); 
                     }
                     ctx.restore();
                 }
 
-                // BOLA NORMAL
                 ctx.save(); ctx.shadowBlur = this.isFurious ? 30 : 15; ctx.shadowColor = this.isFurious ? '#FFFFFF' : this.color;
                 ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill();
                 if (this.avatarLoaded) { ctx.save(); ctx.clip(); ctx.drawImage(this.avatar, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); ctx.restore(); }
@@ -1071,13 +1119,9 @@
                         
                         if (gameStateArena === 'playing' && Math.abs(b1.power - b2.power) > 5) {
                             let winner, loser;
-                            if (b1.activePower === 'spikes' && b2.activePower !== 'spikes') {
-                                winner = b1; loser = b2;
-                            } else if (b2.activePower === 'spikes' && b1.activePower !== 'spikes') {
-                                winner = b2; loser = b1;
-                            } else {
-                                if (b1.power > b2.power) { winner = b1; loser = b2; } else { winner = b2; loser = b1; }
-                            }
+                            if (b1.activePower === 'spikes' && b2.activePower !== 'spikes') { winner = b1; loser = b2; } 
+                            else if (b2.activePower === 'spikes' && b1.activePower !== 'spikes') { winner = b2; loser = b1; } 
+                            else { if (b1.power > b2.power) { winner = b1; loser = b2; } else { winner = b2; loser = b1; } }
                             
                             let currentSteal = winner.isFurious ? (arenaCfg.stealPercent * 2) : arenaCfg.stealPercent;
                             if (winner.activePower === 'spikes') currentSteal *= 3;
@@ -1087,6 +1131,15 @@
                             
                             floatingTextsArena.push({ x: winner.x, y: winner.y - winner.radius, text:`+${dmg}`, color:winner.color, life:1.0, vy:-1.5 });
                             floatingTextsArena.push({ x: loser.x, y: loser.y + loser.radius, text:`-${dmg}`, color:'#FF3131', life:1.0, vy:-1.5 });
+
+                            // SISTEMA DE KILLS
+                            if (loser.power < MIN_POWER && !loser.isDead) {
+                                loser.isDead = true; 
+                                initStat(winner.username);
+                                persistentStats.get(winner.username).kills++;
+                                showKillNotification(winner.username, loser.username);
+                                updateKillsLeaderboard();
+                            }
                         }
                     }
                 }
@@ -1125,20 +1178,15 @@
                 const drawX = this.distance - camX + (widthR * 0.2); 
                 if (drawX < -100 || drawX > widthR + 100) return; 
                 
-                ctx.save();
-                ctx.translate(drawX, this.y);
+                ctx.save(); ctx.translate(drawX, this.y);
                 
                 if(this.velocity > 0.5) {
-                    ctx.fillStyle = 'rgba(255, 100, 0, 0.8)';
-                    ctx.shadowBlur = 15; ctx.shadowColor = 'red';
-                    ctx.beginPath();
-                    const flameLen = Math.min(this.velocity * 2, 100);
-                    ctx.moveTo(-15, 0); ctx.lineTo(-15 - flameLen, -5); ctx.lineTo(-15 - flameLen, 5);
-                    ctx.fill();
+                    ctx.fillStyle = 'rgba(255, 100, 0, 0.8)'; ctx.shadowBlur = 15; ctx.shadowColor = 'red';
+                    ctx.beginPath(); const flameLen = Math.min(this.velocity * 2, 100);
+                    ctx.moveTo(-15, 0); ctx.lineTo(-15 - flameLen, -5); ctx.lineTo(-15 - flameLen, 5); ctx.fill();
                 }
 
-                ctx.shadowBlur = 20; ctx.shadowColor = this.color;
-                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.fillStyle = this.color;
                 ctx.beginPath(); ctx.moveTo(40, 0); ctx.lineTo(-15, -15); ctx.lineTo(-5, 0); ctx.lineTo(-15, 15); ctx.closePath(); ctx.fill();
 
                 ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(0,0,0,0.7)';
@@ -1153,10 +1201,8 @@
                 const displayUser = this.username.length > 8 ? this.username.substring(0,8) + '..' : this.username;
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
                 if(ctx.roundRect) ctx.roundRect(-30, 20, 60, 24, 4); else ctx.rect(-30, 20, 60, 24);
-                ctx.fill();
-                ctx.fillStyle = '#FFF'; ctx.font = 'bold 10px Rajdhani'; ctx.textAlign = 'center'; ctx.fillText(displayUser, 0, 30);
+                ctx.fill(); ctx.fillStyle = '#FFF'; ctx.font = 'bold 10px Rajdhani'; ctx.textAlign = 'center'; ctx.fillText(displayUser, 0, 30);
                 ctx.fillStyle = '#FFD700'; ctx.font = '900 11px Rajdhani'; ctx.fillText(Math.floor(this.distance) + "m", 0, 40);
-
                 ctx.restore();
             }
         }
@@ -1166,7 +1212,7 @@
             const deltaTime = timestamp - lastTimeLoop; lastTimeLoop = timestamp;
             
             // --- LOOP ARENA ---
-            if(ctx && (!document.getElementById('view-game').classList.contains('hidden') || isOverlay && overlayType==='arena')) {
+            if(ctx && (!document.getElementById('view-game').classList.contains('hidden') || isOverlay && overlayType.includes('arena'))) {
                 ctx.clearRect(0, 0, width, height);
                 const deadBalls = [];
                 
@@ -1182,13 +1228,8 @@
                                 const dist = Math.sqrt(dx * dx + dy * dy);
                                 if (dist > 0 && dist < 300) {
                                     const force = (300 - dist) / 300;
-                                    if (b1.activePower === 'blackhole') {
-                                        b2.x -= (dx / dist) * force * 1.5;
-                                        b2.y -= (dy / dist) * force * 1.5;
-                                    } else if (b1.activePower === 'bomb') {
-                                        b2.x += (dx / dist) * force * 3;
-                                        b2.y += (dy / dist) * force * 3;
-                                    }
+                                    if (b1.activePower === 'blackhole') { b2.x -= (dx / dist) * force * 1.5; b2.y -= (dy / dist) * force * 1.5; } 
+                                    else if (b1.activePower === 'bomb') { b2.x += (dx / dist) * force * 3; b2.y += (dy / dist) * force * 3; }
                                 }
                             }
                         }
@@ -1202,20 +1243,13 @@
                 
                 if (gameStateArena === 'playing') deadBalls.forEach(u => balls.delete(u));
                 resolveCollisions(); 
-                if(!isOverlay) updateUILeaderboard(); 
+                if(!isOverlay) { updateUILeaderboard(); }
 
-                // Dibujar balas de cañón
                 for (let i = cannonballs.length - 1; i >= 0; i--) {
-                    const p = cannonballs[i];
-                    p.x += p.vx; p.y += p.vy; p.life--;
-                    
-                    if (p.x < 0 || p.x > width) p.vx *= -1;
-                    if (p.y < 0 || p.y > height) p.vy *= -1;
-
+                    const p = cannonballs[i]; p.x += p.vx; p.y += p.vy; p.life--;
+                    if (p.x < 0 || p.x > width) p.vx *= -1; if (p.y < 0 || p.y > height) p.vy *= -1;
                     ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-                    ctx.fillStyle = p.color; ctx.shadowBlur = 10; ctx.shadowColor = p.color;
-                    ctx.fill(); ctx.shadowBlur = 0;
-
+                    ctx.fillStyle = p.color; ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.fill(); ctx.shadowBlur = 0;
                     if (p.life <= 0) cannonballs.splice(i, 1);
                 }
                 
@@ -1230,7 +1264,6 @@
             // --- LOOP CARRERA ---
             if(ctxR && (!document.getElementById('view-race').classList.contains('hidden') || isOverlay && overlayType==='race')) {
                 ctxR.clearRect(0, 0, widthR, heightR);
-                
                 let maxDist = 0;
                 for (const r of racers.values()) { if (r.distance > maxDist) maxDist = r.distance; }
                 const targetCamX = maxDist - (widthR * 0.5); 
@@ -1238,14 +1271,10 @@
                 if(cameraX < 0) cameraX = 0; 
 
                 bgOffset = (cameraX * 0.5) % 100;
-                ctxR.save();
-                ctxR.strokeStyle = 'rgba(138, 43, 226, 0.15)';
-                ctxR.lineWidth = 2;
-                ctxR.beginPath();
+                ctxR.save(); ctxR.strokeStyle = 'rgba(138, 43, 226, 0.15)'; ctxR.lineWidth = 2; ctxR.beginPath();
                 for(let x = -bgOffset; x < widthR; x += 100) { ctxR.moveTo(x, 0); ctxR.lineTo(x, heightR); }
                 for(let y = heightR; y > 0; y -= (y*0.1) + 20) { ctxR.moveTo(0, y); ctxR.lineTo(widthR, y); }
-                ctxR.stroke();
-                ctxR.restore();
+                ctxR.stroke(); ctxR.restore();
 
                 for (const r of racers.values()) { r.update(deltaTime); r.draw(ctxR, cameraX); }
                 if(!isOverlay) updateRaceLeaderboard();
@@ -1278,6 +1307,28 @@
             `).join('');
             const cArena = document.getElementById('arena-ranking'); if(cArena) cArena.innerHTML = htmlContent;
             const cMob = document.getElementById('arena-ranking-mobile'); if(cMob) cMob.innerHTML = htmlContent;
+        }
+
+        function updateKillsLeaderboard() {
+            const sorted = Array.from(persistentStats.entries()).filter(a => a[1].kills > 0).sort((a,b) => b[1].kills - a[1].kills).slice(0, 10);
+            const html = sorted.map((s, i) => `
+                <div class="flex items-center justify-between bg-black/40 p-2 rounded border border-red-500/20 ${i===0?'border-red-500/50 bg-red-900/10':''}">
+                    <div class="flex items-center gap-2 text-xs"><span class="font-black ${i===0?'text-red-500 text-lg':'text-zinc-500'}">${i===0?'💀':'#'+(i+1)}</span><span class="font-bold text-zinc-300 truncate max-w-[80px]">${s[0]}</span></div>
+                    <span class="text-red-400 font-mono text-[10px] font-bold">${s[1].kills} Kills</span>
+                </div>
+            `).join('');
+            const c = document.getElementById('arena-kills'); if(c) c.innerHTML = html;
+        }
+
+        function updateWinsLeaderboard() {
+            const sorted = Array.from(persistentStats.entries()).filter(a => a[1].wins > 0).sort((a,b) => b[1].wins - a[1].wins).slice(0, 10);
+            const html = sorted.map((s, i) => `
+                <div class="flex items-center justify-between bg-black/40 p-2 rounded border border-purple-500/20 ${i===0?'border-purple-500/50 bg-purple-900/10':''}">
+                    <div class="flex items-center gap-2 text-xs"><span class="font-black ${i===0?'text-purple-400 text-lg':'text-zinc-500'}">${i===0?'🏆':'#'+(i+1)}</span><span class="font-bold text-zinc-300 truncate max-w-[80px]">${s[0]}</span></div>
+                    <span class="text-purple-400 font-mono text-[10px] font-bold">${s[1].wins} Wins</span>
+                </div>
+            `).join('');
+            const c = document.getElementById('arena-wins'); if(c) c.innerHTML = html;
         }
 
         function updateRaceLeaderboard() {
@@ -1353,9 +1404,8 @@
             audio.play();
         });
 
-        // NUEVO: CUANDO ALGUIEN ENTRA AL LIVE
         socket.on("member", (data) => {
-            handleArenaInteraction(data.user, 0, data.avatar); // Se une sin puntos extra pero ya aparece
+            handleArenaInteraction(data.user, 0, data.avatar); 
         });
 
         socket.on("singleLike", (data) => { 
@@ -1459,7 +1509,6 @@
             const ball = balls.get(data.user);
             if(ball && gameStateArena === 'playing') {
                 
-                // Activar Aura Épica
                 ball.auraTimer = 3000;
 
                 const costFury = Number(document.getElementById('cfg-pow-1').value);
