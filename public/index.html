@@ -101,6 +101,15 @@
         }
         .btn-sim:hover { background: #ff5555; transform: scale(1.05); }
 
+        /* CLASE NUEVA PARA EL FORMATO TIKTOK 9:16 */
+        .format-9-16 {
+            aspect-ratio: 9 / 16 !important;
+            width: auto !important;
+            height: 100% !important;
+            margin: 0 auto !important;
+            max-width: 100%;
+        }
+
         #game-canvas, #race-canvas {
             width: 100%; height: 100%; display: block; border-radius: 12px;
             box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
@@ -223,14 +232,11 @@
                     
                     const targetEl = document.getElementById(targetId);
                     if(targetEl) {
-                        // Limpiar estilos para full screen widget
                         targetEl.className = 'w-full h-full overflow-hidden flex flex-col bg-transparent';
                         if (targetId.startsWith('panel')) {
                             targetEl.style.position = 'relative'; targetEl.style.left = '0'; targetEl.style.top = '0'; 
                             targetEl.style.right = 'auto'; targetEl.style.bottom = 'auto'; targetEl.style.width = '100%'; 
                             targetEl.style.maxHeight = '100%'; targetEl.style.display = 'flex';
-                            
-                            // Estilo forzado de caja de cristal
                             targetEl.style.background = 'rgba(10, 10, 15, 0.85)';
                             targetEl.style.backdropFilter = 'blur(8px)';
                             targetEl.style.borderRadius = '12px';
@@ -348,6 +354,15 @@
             <section class="glass p-6">
                 <h2 class="text-xs font-bold uppercase mb-4 text-zinc-500 italic">Controles Maestro</h2>
                 <div class="space-y-6">
+                    
+                    <div class="pb-4 border-b border-zinc-800">
+                        <label class="text-[10px] text-zinc-500 uppercase block font-bold mb-2"><i data-lucide="smartphone" class="inline w-3 mr-1"></i> Formato de Pantalla (Preview)</label>
+                        <div class="flex bg-black/40 p-1 rounded-lg border border-zinc-800">
+                            <button onclick="setCanvasFormat('full')" id="btn-fmt-full" class="bg-cyan-500 text-black flex-1 py-2 text-[10px] font-bold uppercase rounded-md transition-all">Completo</button>
+                            <button onclick="setCanvasFormat('9:16')" id="btn-fmt-916" class="text-[#666] hover:text-white flex-1 py-2 text-[10px] font-bold uppercase rounded-md transition-all">9:16 (TikTok)</button>
+                        </div>
+                    </div>
+
                     <div>
                         <div class="flex items-center gap-2 justify-between mb-2"><label class="text-[10px] text-zinc-500 uppercase">Activar Voz Bot (TTS)</label><input type="checkbox" id="tts-enabled" checked class="accent-cyan-500 h-4 w-4"></div>
                         <select id="tts-voice" class="gift-selector w-full bg-black/40 border border-zinc-800 p-3 rounded-lg text-xs text-white outline-none focus:border-cyan-500"></select>
@@ -373,7 +388,7 @@
     </main>
 
     <main id="view-game" class="hidden max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px]">
-        <div id="main-arena-container" class="col-span-1 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group h-[500px] lg:h-auto">
+        <div id="main-arena-container" class="col-span-1 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group h-[500px] lg:h-auto transition-all duration-300">
             <div class="absolute inset-0 border-2 border-cyan-500/20 rounded-xl pointer-events-none z-10 group-hover:border-cyan-500/50 transition-colors"></div>
             
             <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
@@ -384,7 +399,6 @@
             <div class="flex-1 w-full h-full relative" id="canvas-wrapper">
                 
                 <div id="killfeed" class="absolute top-16 left-1/2 transform -translate-x-1/2 z-40 flex flex-col gap-1 pointer-events-none"></div>
-
                 <div id="arena-timer" class="game-timer text-4xl md:text-5xl lg:text-6xl">03:00</div>
                 
                 <div id="panel-dom" class="arena-overlay-panel arena-overlay-left hidden md:flex">
@@ -419,9 +433,9 @@
                 <canvas id="game-canvas"></canvas>
                 
                 <div id="start-match-overlay" class="match-overlay p-4 text-center">
-                    <h2 class="text-2xl md:text-4xl font-black italic text-white mb-2 uppercase tracking-widest">Sala de Espera</h2>
-                    <p class="text-cyan-400 mb-8 uppercase text-[10px] md:text-xs tracking-[2px] md:tracking-[5px] font-bold">Las bolas no se hacen daño aún</p>
-                    <button id="btn-start-match" onclick="startMatch('arena')" class="btn-start px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-xl md:text-3xl uppercase tracking-widest cursor-pointer pointer-events-auto">Iniciar Batalla</button>
+                    <h2 class="text-xl md:text-2xl font-black italic text-white mb-1 uppercase tracking-widest">Sala de Espera</h2>
+                    <p class="text-cyan-400 mb-4 uppercase text-[9px] md:text-[10px] tracking-[2px] md:tracking-[4px] font-bold">Las bolas no se hacen daño aún</p>
+                    <button id="btn-start-match" onclick="startMatch('arena')" class="btn-start px-6 md:px-8 py-2 md:py-3 rounded-xl font-black text-base md:text-lg uppercase tracking-widest cursor-pointer pointer-events-auto">Iniciar Batalla</button>
                 </div>
                 
                 <div id="end-match-overlay" class="match-overlay p-4 text-center">
@@ -498,7 +512,7 @@
     </main>
 
     <main id="view-race" class="hidden max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:h-[750px]">
-        <div id="main-race-container" class="col-span-1 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group h-[500px] lg:h-auto border-red-500/30">
+        <div id="main-race-container" class="col-span-1 lg:col-span-9 glass relative p-1 flex flex-col overflow-hidden group h-[500px] lg:h-auto border-red-500/30 transition-all duration-300">
             <div class="absolute inset-0 border-2 border-red-500/20 rounded-xl pointer-events-none z-10 group-hover:border-red-500/50 transition-colors"></div>
             
             <div class="absolute top-4 left-4 z-20 flex items-center gap-2">
@@ -520,9 +534,9 @@
                 <canvas id="race-canvas"></canvas>
                 
                 <div id="start-race-overlay" class="match-overlay p-4 text-center">
-                    <h2 class="text-3xl md:text-6xl font-black italic text-red-500 mb-2 uppercase tracking-widest drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">CARRERA DE LA MUERTE</h2>
-                    <p class="text-zinc-400 mb-8 uppercase text-[10px] md:text-xs tracking-[2px] md:tracking-[5px] font-bold">Calentando Motores en Sala de Espera</p>
-                    <button id="btn-start-race" onclick="startMatch('race')" class="btn-start btn-start-race px-8 md:px-12 py-4 md:py-5 rounded-2xl font-black text-xl md:text-3xl uppercase tracking-widest cursor-pointer pointer-events-auto">Iniciar Carrera</button>
+                    <h2 class="text-2xl md:text-4xl font-black italic text-red-500 mb-1 uppercase tracking-widest drop-shadow-[0_0_15px_rgba(255,0,0,0.8)]">CARRERA DE LA MUERTE</h2>
+                    <p class="text-zinc-400 mb-4 uppercase text-[9px] md:text-[10px] tracking-[2px] md:tracking-[4px] font-bold">Calentando Motores en Sala de Espera</p>
+                    <button id="btn-start-race" onclick="startMatch('race')" class="btn-start btn-start-race px-6 md:px-8 py-2 md:py-3 rounded-xl font-black text-base md:text-lg uppercase tracking-widest cursor-pointer pointer-events-auto">Iniciar Carrera</button>
                 </div>
                 
                 <div id="end-race-overlay" class="match-overlay p-4 text-center">
@@ -573,6 +587,27 @@
         const giftersSet = new Set();
         let currentActiveGame = 'arena'; 
 
+        // LÓGICA DE FORMATO DE PANTALLA (9:16 vs FULL)
+        function setCanvasFormat(format) {
+            const btnFull = document.getElementById('btn-fmt-full');
+            const btn916 = document.getElementById('btn-fmt-916');
+            const contA = document.getElementById('main-arena-container');
+            const contR = document.getElementById('main-race-container');
+
+            if (format === '9:16') {
+                btn916.className = "bg-cyan-500 text-black flex-1 py-2 text-[10px] font-bold uppercase rounded-md transition-all";
+                btnFull.className = "text-[#666] hover:text-white flex-1 py-2 text-[10px] font-bold uppercase rounded-md transition-all";
+                contA.classList.add('format-9-16');
+                contR.classList.add('format-9-16');
+            } else {
+                btnFull.className = "bg-cyan-500 text-black flex-1 py-2 text-[10px] font-bold uppercase rounded-md transition-all";
+                btn916.className = "text-[#666] hover:text-white flex-1 py-2 text-[10px] font-bold uppercase rounded-md transition-all";
+                contA.classList.remove('format-9-16');
+                contR.classList.remove('format-9-16');
+            }
+            setTimeout(resizeCanvas, 50); // Fuerza la actualización del tamaño de los canvas
+        }
+
         // ESTADÍSTICAS PERSISTENTES (KILLS / WINS)
         const persistentStats = new Map();
         function initStat(user) { if(!persistentStats.has(user)) persistentStats.set(user, {kills:0, wins:0}); }
@@ -580,7 +615,7 @@
         function togglePanel(panel) {
             const el = document.getElementById(`panel-${panel}`);
             const cb = document.getElementById(`toggle-p-${panel}`);
-            if(el && cb) el.style.display = cb.checked ? 'flex' : 'none';
+            if(el && cb) el.style.opacity = cb.checked ? '1' : '0';
         }
 
         function resetStats() {
@@ -876,7 +911,6 @@
                 
                 const sorted = Array.from(balls.values()).sort((a, b) => b.power - a.power).slice(0, 3);
                 
-                // GUARDAR VICTORIA DEL #1
                 if (sorted.length > 0 && sorted[0].power > 0) {
                     initStat(sorted[0].username);
                     persistentStats.get(sorted[0].username).wins++;
@@ -936,9 +970,6 @@
             }
         }
 
-        /* ==========================================================================
-           SISTEMA DE PROYECTILES (CAÑÓN)
-           ========================================================================== */
         const cannonballs = [];
         function shootCannon(ball, count) {
             for(let i=0; i<count; i++) {
@@ -955,9 +986,6 @@
             floatingTextsArena.push({ x: ball.x, y: ball.y - 40, text: `¡CAÑÓN x${count}!`, color: "#FFD700", life: 1.0, vy: -2 });
         }
 
-        /* ==========================================================================
-           SIMULADOR DE PODERES DESDE UI
-           ========================================================================== */
         function simulatePower(powerName) {
             if(gameStateArena !== 'playing') return alert("La arena debe estar jugando para simular.");
             if(balls.size === 0) handleArenaInteraction("PruebaBOT", 50, ""); 
@@ -988,9 +1016,6 @@
             }
         }
 
-        /* ==========================================================================
-           MOTOR GRÁFICO 1: ARENA DE BATALLA (CON PODERES)
-           ========================================================================== */
         const canvas = document.getElementById('game-canvas'); const ctx = canvas ? canvas.getContext('2d') : null;
         const wrapper = document.getElementById('canvas-wrapper');
         let width, height; const balls = new Map(); const floatingTextsArena = [];
@@ -1015,7 +1040,7 @@
                 this.activePower = null; 
                 this.powerTimer = 0;
                 this.auraTimer = 0; 
-                this.isDead = false; // Flag para dar la kill solo una vez
+                this.isDead = false; 
                 
                 this.radius = this.calculateRadius(); 
                 
@@ -1132,7 +1157,6 @@
                             floatingTextsArena.push({ x: winner.x, y: winner.y - winner.radius, text:`+${dmg}`, color:winner.color, life:1.0, vy:-1.5 });
                             floatingTextsArena.push({ x: loser.x, y: loser.y + loser.radius, text:`-${dmg}`, color:'#FF3131', life:1.0, vy:-1.5 });
 
-                            // SISTEMA DE KILLS
                             if (loser.power < MIN_POWER && !loser.isDead) {
                                 loser.isDead = true; 
                                 initStat(winner.username);
@@ -1146,9 +1170,6 @@
             }
         }
 
-        /* ==========================================================================
-           MOTOR GRÁFICO 2: CARRERA DE LA MUERTE
-           ========================================================================== */
         const canvasR = document.getElementById('race-canvas'); const ctxR = canvasR ? canvasR.getContext('2d') : null;
         const wrapperR = document.getElementById('canvas-wrapper-race');
         let widthR, heightR; const racers = new Map(); const floatingTextsRace = [];
