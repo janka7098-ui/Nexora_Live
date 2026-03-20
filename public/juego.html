@@ -1,6 +1,105 @@
 <!DOCTYPE html>
-<html>
-<body style="background: black; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif;">
-    <h1>🎮 PANTALLA DE JUEGO CONECTADA</h1>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nexora Arena | Live</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; font-family: 'Rajdhani', sans-serif; }
+        canvas { display: block; background: radial-gradient(circle, #1a0b2e 0%, #050507 100%); }
+    </style>
+</head>
+<body>
+    <div class="absolute top-5 left-5 pointer-events-none">
+        <h1 class="text-3xl font-black italic text-cyan-500 uppercase tracking-tighter">NEXORA <span class="text-white">ARENA</span></h1>
+        <div id="status" class="text-[10px] font-bold text-red-500 uppercase tracking-[3px]">Desconectado</div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const status = document.getElementById('status');
+
+        let players = {}; // Aquí guardaremos a los usuarios de TikTok
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.onresize = resize;
+        resize();
+
+        // --- LÓGICA DEL JUEGO ---
+        
+        // 1. Escuchar cuando alguien comenta o se une
+        socket.on('spawnPlayer', (data) => {
+            // data trae: { username, profilePic, color }
+            if (!players[data.username]) {
+                players[data.username] = {
+                    x: Math.random() * canvas.width,
+                    y: -50, // Aparecen desde arriba
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: 2,
+                    radius: 25,
+                    color: data.color || '#8A2BE2',
+                    name: data.username,
+                    img: new Image()
+                };
+                players[data.username].img.src = data.profilePic || 'https://via.placeholder.com/50';
+            }
+        });
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let id in players) {
+                let p = players[id];
+
+                // Gravedad y Movimiento
+                p.vy += 0.2; // Gravedad
+                p.x += p.vx;
+                p.y += p.vy;
+
+                // Rebotar en los bordes
+                if (p.x + p.radius > canvas.width || p.x - p.radius < 0) p.vx *= -0.8;
+                if (p.y + p.radius > canvas.height) {
+                    p.y = canvas.height - p.radius;
+                    p.vy *= -0.6; // Rebote en el suelo
+                }
+
+                // --- DIBUJAR ---
+                ctx.save();
+                // Dibujar círculo con color
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#fff';
+                ctx.stroke();
+                ctx.closePath();
+
+                // Dibujar nombre
+                ctx.fillStyle = "white";
+                ctx.font = "bold 12px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(p.name, p.x, p.y + p.radius + 15);
+                ctx.restore();
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        socket.on('connect', () => {
+            status.innerText = "● Arena Conectada";
+            status.className = "text-[10px] font-bold text-green-500 uppercase tracking-[3px]";
+        });
+
+        update();
+    </script>
 </body>
 </html>
