@@ -2,18 +2,56 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Nexora Arena | Live</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexora | Avatar Arena Battle</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; background: #000; overflow: hidden; font-family: 'Rajdhani', sans-serif; }
-        canvas { display: block; background: radial-gradient(circle, #1a0b2e 0%, #050507 100%); }
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700;900&display=swap');
+        
+        body { 
+            margin: 0; 
+            background: #000; 
+            overflow: hidden; 
+            font-family: 'Rajdhani', sans-serif; 
+        }
+        
+        canvas { 
+            display: block; 
+            background: radial-gradient(circle at center, #1a0b2e 0%, #050507 100%); 
+        }
+
+        /* Estilo para el botón de prueba */
+        .btn-test {
+            background: rgba(138, 43, 226, 0.2);
+            border: 2px solid rgba(138, 43, 226, 0.5);
+            color: #8A2BE2;
+            transition: all 0.3s;
+        }
+        .btn-test:hover {
+            background: #8A2BE2;
+            color: white;
+            box-shadow: 0 0 20px rgba(138, 43, 226, 0.6);
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
-    <div class="absolute top-5 left-5 pointer-events-none">
-        <h1 class="text-3xl font-black italic text-cyan-500 uppercase tracking-tighter">NEXORA <span class="text-white">ARENA</span></h1>
-        <div id="status" class="text-[10px] font-bold text-red-500 uppercase tracking-[3px]">Desconectado</div>
+
+    <div class="absolute top-6 left-6 pointer-events-none z-50">
+        <h1 class="text-4xl font-black italic text-cyan-500 uppercase tracking-tighter shadow-black drop-shadow-lg">
+            NEXORA <span class="text-white">AVATAR ARENA</span>
+        </h1>
+        <div id="status" class="flex items-center gap-2 mt-2">
+            <div id="status-dot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+            <span id="status-text" class="text-[10px] font-bold text-red-500 uppercase tracking-[4px]">Desconectado</span>
+        </div>
+    </div>
+
+    <div class="absolute top-6 right-6 z-50">
+        <button onclick="spawnTestBot()" class="btn-test px-5 py-2 rounded-full font-black text-[11px] uppercase tracking-widest cursor-pointer">
+            ➕ Simular Jugador
+        </button>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -22,9 +60,11 @@
         const socket = io();
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const status = document.getElementById('status');
+        const statusText = document.getElementById('status-text');
+        const statusDot = document.getElementById('status-dot');
 
-        let players = {}; // Aquí guardaremos a los usuarios de TikTok
+        let avatars = {}; 
+        let effects = []; 
 
         function resize() {
             canvas.width = window.innerWidth;
@@ -33,73 +73,172 @@
         window.onresize = resize;
         resize();
 
-        // --- LÓGICA DEL JUEGO ---
-        
-        // 1. Escuchar cuando alguien comenta o se une
-        socket.on('spawnPlayer', (data) => {
-            // data trae: { username, profilePic, color }
-            if (!players[data.username]) {
-                players[data.username] = {
-                    x: Math.random() * canvas.width,
-                    y: -50, // Aparecen desde arriba
-                    vx: (Math.random() - 0.5) * 10,
-                    vy: 2,
-                    radius: 25,
-                    color: data.color || '#8A2BE2',
-                    name: data.username,
-                    img: new Image()
-                };
-                players[data.username].img.src = data.profilePic || 'https://via.placeholder.com/50';
+        // --- CLASE JUGADOR (AVATAR) ---
+        class Avatar {
+            constructor(data) {
+                this.id = data.username;
+                this.x = Math.random() * (canvas.width - 100) + 50;
+                this.y = -60;
+                this.vx = (Math.random() - 0.5) * 10;
+                this.vy = 2;
+                this.radius = 35; 
+                this.color = data.color || '#00FFFF';
+                this.hp = 500 + Math.floor(Math.random() * 500); 
+                this.maxHp = this.hp;
+                this.img = new Image();
+                this.img.src = data.profilePic || 'https://via.placeholder.com/100';
+                this.lastAttack = Date.now();
             }
-        });
 
-        function update() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            update() {
+                // Física básica
+                this.vy += 0.2; 
+                this.x += this.vx;
+                this.y += this.vy;
 
-            for (let id in players) {
-                let p = players[id];
-
-                // Gravedad y Movimiento
-                p.vy += 0.2; // Gravedad
-                p.x += p.vx;
-                p.y += p.vy;
-
-                // Rebotar en los bordes
-                if (p.x + p.radius > canvas.width || p.x - p.radius < 0) p.vx *= -0.8;
-                if (p.y + p.radius > canvas.height) {
-                    p.y = canvas.height - p.radius;
-                    p.vy *= -0.6; // Rebote en el suelo
+                // Rebotes
+                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) this.vx *= -0.8;
+                if (this.y + this.radius > canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.vy *= -0.6;
                 }
 
-                // --- DIBUJAR ---
+                // Lógica de ataque cada 2-4 segundos
+                if (Date.now() - this.lastAttack > 2500) {
+                    this.attack();
+                    this.lastAttack = Date.now() + (Math.random() * 1000);
+                }
+            }
+
+            draw() {
                 ctx.save();
-                // Dibujar círculo con color
+                
+                // Aura brillante
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.fill();
+                ctx.arc(this.x, this.y, this.radius + 4, 0, Math.PI * 2);
+                ctx.strokeStyle = this.color;
                 ctx.lineWidth = 3;
-                ctx.strokeStyle = '#fff';
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15;
                 ctx.stroke();
                 ctx.closePath();
 
-                // Dibujar nombre
-                ctx.fillStyle = "white";
-                ctx.font = "bold 12px Arial";
-                ctx.textAlign = "center";
-                ctx.fillText(p.name, p.x, p.y + p.radius + 15);
+                // Imagen de perfil circular
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.clip();
+                if (this.img.complete) {
+                    ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+                } else {
+                    ctx.fillStyle = "#111"; ctx.fill();
+                }
                 ctx.restore();
+
+                // Número de HP Central
+                ctx.fillStyle = "white";
+                ctx.font = "bold 18px Rajdhani";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 3;
+                ctx.strokeText(Math.floor(this.hp), this.x, this.y);
+                ctx.fillText(Math.floor(this.hp), this.x, this.y);
+
+                // Nombre
+                ctx.fillStyle = "rgba(255,255,255,0.8)";
+                ctx.font = "600 12px Rajdhani";
+                ctx.fillText(this.id.toUpperCase(), this.x, this.y + this.radius + 15);
             }
 
-            requestAnimationFrame(update);
+            attack() {
+                let targets = Object.values(avatars).filter(a => a.id !== this.id);
+                if (targets.length === 0) return;
+
+                let target = targets[Math.floor(Math.random() * targets.length)];
+                let dist = Math.sqrt((this.x - target.x)**2 + (this.y - target.y)**2);
+
+                if (dist < 500) {
+                    // Efecto de Rayo
+                    effects.push({
+                        type: 'lightning',
+                        x1: this.x, y1: this.y,
+                        x2: target.x, y2: target.y,
+                        color: this.color,
+                        life: 12
+                    });
+
+                    // Daño
+                    let dmg = 20 + Math.floor(Math.random() * 40);
+                    target.hp -= dmg;
+
+                    // Texto de daño
+                    effects.push({
+                        type: 'dmg_text',
+                        x: target.x, y: target.y - 20,
+                        text: `-${dmg}`,
+                        life: 50
+                    });
+                }
+            }
         }
 
+        // --- GENERADOR DE BOTS ---
+        function spawnTestBot() {
+            const id = "User_" + Math.floor(Math.random()*999);
+            avatars[id] = new Avatar({
+                username: id,
+                profilePic: `https://i.pravatar.cc/150?u=${id}`,
+                color: ["#00FFFF", "#8A2BE2", "#39FF14", "#FF3131", "#FFD700"][Math.floor(Math.random()*5)]
+            });
+        }
+
+        // --- BUCLE DE RENDERIZADO ---
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Actualizar Avatares
+            for (let id in avatars) {
+                avatars[id].update();
+                avatars[id].draw();
+                if (avatars[id].hp <= 0) delete avatars[id];
+            }
+
+            // Dibujar Efectos
+            for (let i = effects.length - 1; i >= 0; i--) {
+                let e = effects[i];
+                e.life--;
+
+                if (e.type === 'lightning') {
+                    ctx.beginPath();
+                    ctx.moveTo(e.x1, e.y1);
+                    ctx.lineTo((e.x1 + e.x2)/2 + (Math.random()-0.5)*40, (e.y1 + e.y2)/2 + (Math.random()-0.5)*40);
+                    ctx.lineTo(e.x2, e.y2);
+                    ctx.strokeStyle = "white";
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = e.color;
+                    ctx.shadowBlur = 15;
+                    ctx.stroke();
+                } else if (e.type === 'dmg_text') {
+                    ctx.fillStyle = `rgba(255, 49, 49, ${e.life/50})`;
+                    ctx.font = "bold 24px Rajdhani";
+                    ctx.fillText(e.text, e.x, e.y - (50 - e.life));
+                }
+
+                if (e.life <= 0) effects.splice(i, 1);
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        // Eventos de Socket
+        socket.on('spawnPlayer', (data) => avatars[data.username] = new Avatar(data));
         socket.on('connect', () => {
-            status.innerText = "● Arena Conectada";
-            status.className = "text-[10px] font-bold text-green-500 uppercase tracking-[3px]";
+            statusText.innerText = "Conectado a Nexora Arena";
+            statusText.classList.replace('text-red-500', 'text-green-500');
+            statusDot.classList.replace('bg-red-500', 'bg-green-500');
         });
 
-        update();
+        loop();
     </script>
 </body>
 </html>
