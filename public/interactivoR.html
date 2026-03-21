@@ -5,118 +5,157 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lexora Interactive</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+
 body{
-background:#0a0a12;
-color:white;
+background:#050507;
+color:#eee;
+background-image: radial-gradient(circle at 50% -20%, #1a0b2e 0%, #050507 80%);
 }
+
+/* HEADER */
 .header{
 padding:20px;
-background:linear-gradient(90deg,#6d28d9,#00ffa6);
-font-weight:700;
-font-size:20px;
+border-radius:16px;
+background: rgba(15,15,25,0.8);
+backdrop-filter: blur(12px);
+border:1px solid rgba(0,255,255,0.2);
+box-shadow:0 0 20px rgba(0,0,0,0.8);
+font-size:22px;
+font-weight:800;
+letter-spacing:2px;
+color:#00ffff;
+margin:20px;
 }
+
+/* CONTAINER */
 .container{
 padding:20px;
-max-width:1000px;
+max-width:1100px;
 margin:auto;
 }
-.search{
-width:100%;
+
+/* INPUTS */
+input, select{
 padding:12px;
 border-radius:10px;
-border:none;
-background:#151525;
+border:1px solid rgba(255,255,255,0.08);
+background:rgba(0,0,0,0.4);
 color:white;
-margin-bottom:20px;
+outline:none;
+transition:0.2s;
 }
 
-/* 🔥 NUEVO INPUT USER */
+input:focus, select:focus{
+border-color:#00ffff;
+box-shadow:0 0 10px rgba(0,255,255,0.3);
+}
+
+/* SEARCH */
+.search{
+width:100%;
+margin:20px 0;
+}
+
+/* USER INPUT */
 .user-input{
 width:100%;
-margin-bottom:15px;
+margin-bottom:10px;
 }
 
-/* SELECTOR PRO */
+/* PANEL */
+.add-box{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-bottom:20px;
+padding:15px;
+border-radius:16px;
+background: rgba(15,15,25,0.7);
+border:1px solid rgba(138,43,226,0.2);
+backdrop-filter: blur(10px);
+}
+
+/* SELECTOR */
 .selector{
 position:relative;
-width:250px;
+width:220px;
 }
+
 .selected{
-background:#1b1b2b;
-padding:10px;
-border-radius:8px;
+background:rgba(0,0,0,0.5);
+padding:12px;
+border-radius:10px;
 cursor:pointer;
+border:1px solid rgba(255,255,255,0.08);
 }
+
 .dropdown{
 position:absolute;
 width:100%;
 max-height:250px;
 overflow-y:auto;
-background:#11111c;
-border-radius:10px;
+background:#0b0b15;
+border-radius:12px;
 margin-top:5px;
 display:none;
+border:1px solid rgba(0,255,255,0.2);
 z-index:10;
 }
+
 .item{
 display:flex;
 align-items:center;
 gap:10px;
 padding:10px;
 cursor:pointer;
+transition:0.2s;
 }
+
 .item:hover{
-background:#1f1f2e;
+background:rgba(0,255,255,0.1);
 }
+
 .item img{
 width:30px;
 height:30px;
 }
 
-.add-box{
-display:flex;
-gap:10px;
-margin-bottom:20px;
-flex-wrap:wrap;
-}
-
-input,select{
-padding:10px;
-border-radius:8px;
-border:none;
-background:#1b1b2b;
-color:white;
-}
-
+/* TABLA */
 .table{
 width:100%;
 border-collapse:collapse;
+margin-top:20px;
 }
 
 .table th{
 padding:12px;
-color:#00ffa6;
 text-align:left;
+color:#00ffff;
+font-size:12px;
+letter-spacing:1px;
 }
 
 .row td{
 padding:12px;
-background:#11111c;
-border-bottom:1px solid #1a1a2a;
+background:rgba(10,10,20,0.7);
+border-bottom:1px solid rgba(255,255,255,0.05);
 }
 
+/* BOTONES */
 .btn{
-padding:8px 12px;
+padding:10px 14px;
 border:none;
-border-radius:8px;
+border-radius:10px;
 cursor:pointer;
-font-weight:600;
+font-weight:700;
+transition:0.2s;
 }
 
 .test{
-background:#00ffa6;
+background:#00ffff;
 color:black;
 }
 
@@ -124,23 +163,25 @@ color:black;
 margin-top:20px;
 width:100%;
 padding:14px;
-background:linear-gradient(90deg,#6d28d9,#00ffa6);
+border-radius:12px;
+background:linear-gradient(90deg,#8A2BE2,#00ffff);
+font-weight:800;
 border:none;
-border-radius:10px;
 color:white;
-font-weight:700;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">Lexora Interactive PRO 🚀</div>
+<div class="header">
+LEXORA <span style="color:#8A2BE2">INTERACTIVE</span>
+</div>
 
 <div class="container">
 
-<!-- 🔥 NUEVO: USUARIO ROBLOX -->
-<input id="robloxUser" class="user-input" placeholder="Usuario Roblox (a quién afecta)">
+<input id="robloxUser" class="user-input" placeholder="Usuario Roblox (o TODOS)">
+<input id="adminCode" class="user-input" placeholder="Código admin (solo TODOS)">
 
 <input class="search" placeholder="Buscar evento..." onkeyup="filter()" id="search">
 
@@ -148,11 +189,10 @@ font-weight:700;
 
 <select id="type">
 <option value="gift">🎁 Gift</option>
-<option value="like">❤️ Like (cada X)</option>
+<option value="like">❤️ Like</option>
 <option value="follow">➕ Follow</option>
 </select>
 
-<!-- SELECTOR VISUAL -->
 <div id="giftSelector" class="selector">
 <div class="selected" onclick="toggleDropdown()">
 <span id="selectedText">Seleccionar regalo</span>
@@ -161,21 +201,12 @@ font-weight:700;
 </div>
 
 <input id="newParts" placeholder="Parts (-5)">
-<input id="targetLikes" placeholder="Cada cuantos likes (ej: 200)">
+<input id="targetLikes" placeholder="Cada cuantos likes">
 <button class="btn test" onclick="add()">Agregar</button>
 
 </div>
 
-<table class="table" id="table">
-<tr>
-<th>Usuario</th>
-<th>Tipo</th>
-<th>Nombre</th>
-<th>Parts</th>
-<th>Meta</th>
-<th>Test</th>
-</tr>
-</table>
+<table class="table" id="table"></table>
 
 <button class="save" onclick="save()">Guardar</button>
 
@@ -183,14 +214,22 @@ font-weight:700;
 
 <script>
 
-// 🔥 MULTIUSUARIO
 let allEvents = JSON.parse(localStorage.getItem("eventsByUser")) || {}
-
 let selectedGift = ""
 let giftImages = {}
 
 function getUser(){
-  return document.getElementById("robloxUser").value.trim()
+const user = document.getElementById("robloxUser").value.trim()
+const code = document.getElementById("adminCode").value.trim()
+
+if(user.toLowerCase() === "todos"){
+if(code !== "admin24"){
+alert("Código admin incorrecto 🚫")
+return null
+}
+return "ALL_USERS"
+}
+return user
 }
 
 function toggleDropdown(){
@@ -198,25 +237,17 @@ const d = document.getElementById("dropdown")
 d.style.display = d.style.display === "block" ? "none" : "block"
 }
 
-// 🔥 CARGAR REGALOS
 async function loadGifts(){
-try{
 const res = await fetch("/gift-list")
 const gifts = await res.json()
-
 const dropdown = document.getElementById("dropdown")
 
 gifts.forEach(g=>{
-
 giftImages[g.name.toLowerCase()] = g.image
 
 const div = document.createElement("div")
 div.className = "item"
-
-div.innerHTML = `
-<img src="${g.image}">
-<span>${g.name}</span>
-`
+div.innerHTML = `<img src="${g.image}"><span>${g.name}</span>`
 
 div.onclick = ()=>{
 selectedGift = g.name
@@ -225,12 +256,7 @@ dropdown.style.display = "none"
 }
 
 dropdown.appendChild(div)
-
 })
-
-}catch(err){
-console.log("error gifts")
-}
 }
 
 loadGifts()
@@ -254,11 +280,9 @@ table.innerHTML = `
 
 if(!user || !allEvents[user]) return
 
-const events = allEvents[user]
+Object.keys(allEvents[user]).forEach(name=>{
 
-Object.keys(events).forEach(name=>{
-
-const e = events[name]
+const e = allEvents[user][name]
 const img = giftImages[name?.toLowerCase()]
 
 const row = document.createElement("tr")
@@ -266,40 +290,21 @@ row.className="row"
 
 row.innerHTML = `
 <td>${user}</td>
-
 <td>${e.type}</td>
-
-<td>
-<div style="display:flex;align-items:center;gap:10px;">
-${img ? `<img src="${img}" style="width:30px;height:30px">` : ""}
-${name}
-</div>
-</td>
-
-<td>
-<input value="${e.parts}" onchange="update('${name}',this.value)">
-</td>
-
-<td>
-${e.type === "like" ? e.targetLikes || "-" : "-"}
-</td>
-
-<td>
-<input id="test-${name}" value="1">
-<button class="btn test" onclick="test('${name}')">TEST</button>
-</td>
+<td>${img?`<img src="${img}" style="width:25px">`:""} ${name}</td>
+<td><input value="${e.parts}" onchange="update('${name}',this.value)"></td>
+<td>${e.targetLikes||"-"}</td>
+<td><input id="test-${name}" value="1">
+<button class="btn test" onclick="test('${name}')">TEST</button></td>
 `
 
 table.appendChild(row)
-
 })
-
 }
 
 function add(){
-
 const user = getUser()
-if(!user) return alert("Pon usuario Roblox")
+if(!user) return
 
 const type = document.getElementById("type").value
 const parts = Number(document.getElementById("newParts").value)
@@ -307,50 +312,31 @@ const targetLikes = Number(document.getElementById("targetLikes").value)
 
 if(!allEvents[user]) allEvents[user] = {}
 
-let key = ""
+let key = type==="gift"?selectedGift:type==="like"?"like_"+targetLikes:"follow"
 
-if(type === "gift"){
-if(!selectedGift) return alert("Selecciona un regalo")
-key = selectedGift
-}
-
-if(type === "like"){
-if(!targetLikes) return alert("Pon número de likes")
-key = "like_"+targetLikes
-}
-
-if(type === "follow"){
-key = "follow"
-}
-
-allEvents[user][key] = {
+allEvents[user][key]={
 type,
 parts,
-targetLikes: type === "like" ? targetLikes : null,
-robloxUser: user
+targetLikes,
+robloxUser:user
 }
 
 render()
-
 }
 
 function update(name,value){
-const user = getUser()
-allEvents[user][name].parts = Number(value)
+const user=getUser()
+allEvents[user][name].parts=Number(value)
 }
 
 function test(name){
-
-const user = getUser()
-const e = allEvents[user][name]
-
-const amount = Number(document.getElementById(`test-${name}`).value)
+const user=getUser()
+const e=allEvents[user][name]
+const amount=Number(document.getElementById("test-"+name).value)
 
 fetch("/test",{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 gift:name,
 repeatCount:amount,
@@ -360,24 +346,20 @@ targetLikes:e.targetLikes,
 robloxUser:user
 })
 })
-
-console.log("TEST:", name, "→", user)
-
 }
 
 function save(){
 localStorage.setItem("eventsByUser",JSON.stringify(allEvents))
-alert("Guardado por usuario 🔥")
+alert("Guardado 🔥")
 }
 
 function filter(){
-const s = document.getElementById("search").value.toLowerCase()
+const s=document.getElementById("search").value.toLowerCase()
 document.querySelectorAll(".row").forEach(r=>{
-r.style.display = r.innerText.toLowerCase().includes(s) ? "" : "none"
+r.style.display=r.innerText.toLowerCase().includes(s)?"":"none"
 })
 }
 
-// 🔥 cuando cambias usuario → render
 document.getElementById("robloxUser").addEventListener("input",render)
 
 render()
