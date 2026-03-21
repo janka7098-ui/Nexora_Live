@@ -134,7 +134,7 @@
         
         let avatars = {}; 
         let effects = []; 
-        let bullets = []; // Array para guardar las bolitas de la pistola
+        let bullets = []; 
         
         let arenaBox = { x: 0, y: 0, w: 0, h: 0 };
 
@@ -149,26 +149,21 @@
         window.onresize = resize;
         resize();
 
-        // --- SISTEMA DE BALAS (SHOOT / STORM) ---
+        // --- SISTEMA DE BALAS ---
         class Bullet {
             constructor(x, y, vx, vy, color, ownerId, dmg) {
-                this.x = x;
-                this.y = y;
-                this.vx = vx;
-                this.vy = vy;
+                this.x = x; this.y = y;
+                this.vx = vx; this.vy = vy;
                 this.color = color;
                 this.ownerId = ownerId;
                 this.dmg = dmg;
                 this.radius = 6;
-                this.life = 150; // Tiempo de vida de la bala
+                this.life = 150; 
             }
 
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
+                this.x += this.vx; this.y += this.vy;
                 this.life--;
-
-                // Rebote en las paredes de la arena
                 if (this.x - this.radius < arenaBox.x || this.x + this.radius > arenaBox.x + arenaBox.w) this.vx *= -1;
                 if (this.y - this.radius < arenaBox.y || this.y + this.radius > arenaBox.y + arenaBox.h) this.vy *= -1;
             }
@@ -181,7 +176,6 @@
                 ctx.shadowBlur = 10;
                 ctx.fill();
                 
-                // Estela (trail)
                 ctx.beginPath();
                 ctx.moveTo(this.x, this.y);
                 ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3);
@@ -198,10 +192,11 @@
                 this.id = data.username;
                 this.radius = data.isBoss ? 60 : 35; 
                 this.x = arenaBox.x + Math.random() * (arenaBox.w - this.radius * 2) + this.radius;
-                this.y = arenaBox.y + this.radius + 10;
+                this.y = arenaBox.y + Math.random() * (arenaBox.h - this.radius * 2) + this.radius; // Aparecen aleatorio en toda la caja
                 
-                this.vx = (Math.random() - 0.5) * 6;
-                this.vy = 2;
+                // Movimiento inicial aleatorio en cualquier dirección
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
                 
                 this.color = data.color || '#00FFFF';
                 this.maxHp = data.isBoss ? 5000 : 500 + Math.floor(Math.random() * 500); 
@@ -210,7 +205,6 @@
                 this.img = new Image();
                 this.img.src = data.profilePic || `https://api.dicebear.com/7.x/avataaars/svg?seed=${this.id}`;
                 
-                // Estados de Poderes
                 this.isRampaging = false;
                 this.rampageTimer = 0;
                 this.hasBlade = false;
@@ -219,49 +213,63 @@
             }
 
             update() {
-                // Fricción y Gravedad normal (si no está en Rampage)
-                if (!this.isRampaging) {
-                    this.vy += 0.1; // Gravedad suave
-                    this.vx *= 0.99;
-                    this.vy *= 0.99;
-                } else {
-                    // Si está en Rampage, deja una estela de fuego
+                if (this.isRampaging) {
                     this.rampageTimer--;
                     if (this.rampageTimer % 3 === 0) {
                         effects.push({ type: 'trail', x: this.x, y: this.y, color: '#FF3131', life: 15, radius: this.radius });
                     }
                     if (this.rampageTimer <= 0) {
                         this.isRampaging = false;
-                        this.vx *= 0.3; // Frena tras la embestida
+                        this.vx *= 0.3; 
                         this.vy *= 0.3;
                     }
+                } else {
+                    // Mantenimiento de velocidad constante (Movimiento Libre)
+                    let speed = Math.hypot(this.vx, this.vy);
+                    if (speed < 2) {
+                        // Si van muy lento, se dan un empujoncito aleatorio para no quedarse quietos
+                        this.vx += (Math.random() - 0.5) * 1.5;
+                        this.vy += (Math.random() - 0.5) * 1.5;
+                    }
+                    // Ligera fricción natural para que no se aceleren infinitamente
+                    this.vx *= 0.995;
+                    this.vy *= 0.995;
                 }
 
                 this.x += this.vx;
                 this.y += this.vy;
 
-                // Rebotes con la Caja de Arena
-                if (this.x + this.radius > arenaBox.x + arenaBox.w) { this.x = arenaBox.x + arenaBox.w - this.radius; this.vx *= -0.8; }
-                if (this.x - this.radius < arenaBox.x) { this.x = arenaBox.x + this.radius; this.vx *= -0.8; }
-                if (this.y + this.radius > arenaBox.y + arenaBox.h) { this.y = arenaBox.y + arenaBox.h - this.radius; this.vy *= -0.8; }
-                if (this.y - this.radius < arenaBox.y) { this.y = arenaBox.y + this.radius; this.vy *= -0.8; }
+                // Rebotes perfectos con la Caja de Arena (Billar)
+                if (this.x + this.radius > arenaBox.x + arenaBox.w) { 
+                    this.x = arenaBox.x + arenaBox.w - this.radius; 
+                    this.vx *= -1; 
+                }
+                if (this.x - this.radius < arenaBox.x) { 
+                    this.x = arenaBox.x + this.radius; 
+                    this.vx *= -1; 
+                }
+                if (this.y + this.radius > arenaBox.y + arenaBox.h) { 
+                    this.y = arenaBox.y + arenaBox.h - this.radius; 
+                    this.vy *= -1; 
+                }
+                if (this.y - this.radius < arenaBox.y) { 
+                    this.y = arenaBox.y + this.radius; 
+                    this.vy *= -1; 
+                }
 
                 // Lógica de Blades (Sierras)
                 if (this.hasBlade) {
                     this.bladeTimer--;
-                    this.bladeAngle += 0.15; // Velocidad de giro
-                    
-                    // Dañar a los que toquen la sierra
+                    this.bladeAngle += 0.15; 
                     for (let otherId in avatars) {
                         if (otherId !== this.id) {
                             let other = avatars[otherId];
                             let dist = Math.hypot(this.x - other.x, this.y - other.y);
-                            if (dist < this.radius + other.radius + 30) { // 30 es la distancia de la sierra
-                                other.takeDamage(1); // Daño continuo por frame
+                            if (dist < this.radius + other.radius + 30) {
+                                other.takeDamage(1);
                             }
                         }
                     }
-
                     if (this.bladeTimer <= 0) this.hasBlade = false;
                 }
             }
@@ -269,24 +277,24 @@
             draw() {
                 ctx.save();
                 
-                // Dibujar Sierras (Blade Power)
+                // Dibujar Sierras
                 if (this.hasBlade) {
                     const sawDist = this.radius + 25;
-                    for(let i=0; i<3; i++) { // 3 sierras girando
+                    for(let i=0; i<3; i++) {
                         let angle = this.bladeAngle + (i * ((Math.PI * 2) / 3));
                         let sawX = this.x + Math.cos(angle) * sawDist;
                         let sawY = this.y + Math.sin(angle) * sawDist;
                         
                         ctx.beginPath();
                         ctx.arc(sawX, sawY, 12, 0, Math.PI * 2);
-                        ctx.fillStyle = "#8A2BE2"; // Morado
+                        ctx.fillStyle = "#8A2BE2";
                         ctx.shadowColor = "#8A2BE2";
                         ctx.shadowBlur = 10;
                         ctx.fill();
                     }
                 }
 
-                // Aura del jugador
+                // Aura
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius + 4, 0, Math.PI * 2);
                 ctx.strokeStyle = this.isRampaging ? "#FF3131" : this.color;
@@ -307,15 +315,17 @@
                 }
                 ctx.restore();
 
-                // HP y Nombre
+                // HP
                 ctx.fillStyle = "white";
                 ctx.font = "900 16px Rajdhani";
                 ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
                 ctx.strokeStyle = "rgba(0,0,0,0.9)";
                 ctx.lineWidth = 4;
                 ctx.strokeText(Math.floor(this.hp), this.x, this.y + this.radius + 18);
                 ctx.fillText(Math.floor(this.hp), this.x, this.y + this.radius + 18);
 
+                // Nombre
                 ctx.fillStyle = this.color;
                 ctx.font = "bold 13px Rajdhani";
                 ctx.strokeText(this.id, this.x, this.y + this.radius + 32);
@@ -324,100 +334,68 @@
 
             takeDamage(amount) {
                 this.hp -= amount;
-                if(Math.random() > 0.7) { // No saturar con demasiados textos si es daño continuo
+                if(Math.random() > 0.5) { 
                     effects.push({ type: 'dmg_text', x: this.x, y: this.y - this.radius, text: `-${Math.floor(amount)}`, life: 40 });
                 }
             }
         }
 
         // --- SISTEMA DE PODERES ---
-
-        // 1. SHOOT (Pistola): Dispara balas hacia un objetivo
         function powerShoot(user) {
             let targets = Object.values(avatars).filter(a => a.id !== user.id);
             if (targets.length === 0) return;
-            
-            // Elegir objetivo al azar
             let target = targets[Math.floor(Math.random() * targets.length)];
-            
-            // Calcular dirección
             let angle = Math.atan2(target.y - user.y, target.x - user.x);
             
-            // Disparar 3 balas en ráfaga (con un pequeño margen de error)
             for(let i = -1; i <= 1; i++) {
                 let spread = angle + (i * 0.15);
                 let speed = 12;
-                bullets.push(new Bullet(
-                    user.x, user.y, 
-                    Math.cos(spread) * speed, Math.sin(spread) * speed, 
-                    "#39FF14", user.id, 25 // 25 de daño por bala
-                ));
+                bullets.push(new Bullet(user.x, user.y, Math.cos(spread) * speed, Math.sin(spread) * speed, "#39FF14", user.id, 25));
             }
         }
 
-        // 2. STORM (Tormenta): Dispara balas en 360 grados
         function powerStorm(user) {
             let numBullets = 12;
             for(let i = 0; i < numBullets; i++) {
                 let angle = (i * (Math.PI * 2)) / numBullets;
                 let speed = 8;
-                bullets.push(new Bullet(
-                    user.x, user.y, 
-                    Math.cos(angle) * speed, Math.sin(angle) * speed, 
-                    "#FFF", user.id, 15
-                ));
+                bullets.push(new Bullet(user.x, user.y, Math.cos(angle) * speed, Math.sin(angle) * speed, "#FFF", user.id, 15));
             }
         }
 
-        // 3. SHOCK (Choque Eléctrico): Daño en área (AOE) instantáneo
         function powerShock(user) {
-            let range = 300; // Rango del rayo
+            let range = 300; 
             let hitSomeone = false;
-
             for (let otherId in avatars) {
                 if (otherId !== user.id) {
                     let other = avatars[otherId];
                     let dist = Math.hypot(user.x - other.x, user.y - other.y);
-                    
                     if (dist < range) {
                         hitSomeone = true;
-                        other.takeDamage(50); // Daño directo
-                        // Dibujar rayo
-                        effects.push({
-                            type: 'lightning',
-                            x1: user.x, y1: user.y, x2: other.x, y2: other.y,
-                            color: "#FFD700", life: 15
-                        });
+                        other.takeDamage(50); 
+                        effects.push({ type: 'lightning', x1: user.x, y1: user.y, x2: other.x, y2: other.y, color: "#FFD700", life: 15 });
                     }
                 }
             }
-
-            // Si no le dio a nadie, dibuja un anillo eléctrico fallido
-            if(!hitSomeone) {
-                effects.push({ type: 'shockwave', x: user.x, y: user.y, color: "#FFD700", radius: range, life: 20 });
-            }
+            if(!hitSomeone) effects.push({ type: 'shockwave', x: user.x, y: user.y, color: "#FFD700", radius: range, life: 20 });
         }
 
-        // 4. RAMPAGE (Embestida): Carga rápida hacia el enemigo más cercano
         function powerRampage(user) {
             let targets = Object.values(avatars).filter(a => a.id !== user.id);
             if (targets.length === 0) return;
-            
             let target = targets.sort((a,b) => Math.hypot(user.x - a.x, user.y - a.y) - Math.hypot(user.x - b.x, user.y - b.y))[0];
             
             let angle = Math.atan2(target.y - user.y, target.x - user.x);
-            let speed = 25; // Velocidad absurda
-            
+            let speed = 25; 
             user.vx = Math.cos(angle) * speed;
             user.vy = Math.sin(angle) * speed;
             user.isRampaging = true;
-            user.rampageTimer = 30; // Dura medio segundo de carga
+            user.rampageTimer = 30; 
         }
 
-        // 5. BLADE (Sierras): Activa el aura cortante
         function powerBlade(user) {
             user.hasBlade = true;
-            user.bladeTimer = 300; // Dura ~5 segundos
+            user.bladeTimer = 300; 
         }
 
         // --- BOTONES DEV PANEL ---
@@ -449,7 +427,7 @@
             if(powerName === 'blade') powerBlade(randomUser);
         }
 
-        // --- BUCLE PRINCIPAL (RENDER Y FÍSICA) ---
+        // --- BUCLE PRINCIPAL ---
         function loop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -466,40 +444,73 @@
             ctx.fill(); ctx.stroke();
             ctx.restore();
 
-            // 2. Actualizar Avatares
+            // 2. Colisiones Físicas entre Avatares
+            let avatarList = Object.values(avatars);
+            for (let i = 0; i < avatarList.length; i++) {
+                for (let j = i + 1; j < avatarList.length; j++) {
+                    let a = avatarList[i];
+                    let b = avatarList[j];
+                    
+                    let dx = b.x - a.x;
+                    let dy = b.y - a.y;
+                    let dist = Math.hypot(dx, dy);
+                    let minDist = a.radius + b.radius;
+
+                    if (dist < minDist) {
+                        // A) Separarlos para que no se atasquen
+                        let overlap = minDist - dist;
+                        let nx = dx / dist;
+                        let ny = dy / dist;
+                        
+                        a.x -= nx * (overlap / 2);
+                        a.y -= ny * (overlap / 2);
+                        b.x += nx * (overlap / 2);
+                        b.y += ny * (overlap / 2);
+
+                        // B) Calcular daño
+                        let isSpecialHit = false;
+                        if (a.isRampaging || b.isRampaging) {
+                            if (a.isRampaging) { b.takeDamage(100); a.isRampaging = false; }
+                            if (b.isRampaging) { a.takeDamage(100); b.isRampaging = false; }
+                            isSpecialHit = true;
+                            effects.push({ type: 'shockwave', x: a.x + dx/2, y: a.y + dy/2, color: '#FF3131', radius: 40, life: 20 });
+                        } else {
+                            // Daño normal por choque (Entre 10 y 25)
+                            let crashDmg = 10 + Math.floor(Math.random() * 15);
+                            a.takeDamage(crashDmg);
+                            b.takeDamage(crashDmg);
+                        }
+
+                        // C) Rebote elástico (Intercambian velocidades)
+                        let tx = a.vx; a.vx = b.vx; b.vx = tx;
+                        let ty = a.vy; a.vy = b.vy; b.vy = ty;
+
+                        // Efecto visual de colisión
+                        if(!isSpecialHit) {
+                            effects.push({ type: 'shockwave', x: a.x + dx/2, y: a.y + dy/2, color: '#FFD700', radius: 25, life: 10 });
+                        }
+                    }
+                }
+            }
+
+            // 3. Actualizar y Dibujar Avatares
             for (let id in avatars) {
                 avatars[id].update();
                 avatars[id].draw();
                 
-                // Si alguien en Rampage choca con otro, le hace daño masivo
-                if(avatars[id].isRampaging) {
-                    for(let otherId in avatars) {
-                        if(id !== otherId) {
-                            let other = avatars[otherId];
-                            if(Math.hypot(avatars[id].x - other.x, avatars[id].y - other.y) < avatars[id].radius + other.radius) {
-                                other.takeDamage(100);
-                                avatars[id].isRampaging = false; // Se detiene al chocar
-                                avatars[id].vx *= -0.5; // Rebote
-                            }
-                        }
-                    }
-                }
-
                 // Borrar muertos
                 if (avatars[id].hp <= 0) {
-                    // Explosión de muerte
                     effects.push({ type: 'shockwave', x: avatars[id].x, y: avatars[id].y, color: avatars[id].color, radius: 100, life: 30 });
                     delete avatars[id];
                 }
             }
 
-            // 3. Actualizar Balas
+            // 4. Actualizar Balas
             for (let i = bullets.length - 1; i >= 0; i--) {
                 let b = bullets[i];
                 b.update();
                 b.draw();
 
-                // Colisión Bala vs Avatares
                 let hit = false;
                 for (let id in avatars) {
                     if (id !== b.ownerId) {
@@ -507,17 +518,15 @@
                         if (Math.hypot(b.x - target.x, b.y - target.y) < target.radius + b.radius) {
                             target.takeDamage(b.dmg);
                             hit = true;
-                            // Pequeña explosión al golpear
                             effects.push({ type: 'shockwave', x: b.x, y: b.y, color: b.color, radius: 20, life: 10 });
                             break;
                         }
                     }
                 }
-
                 if (hit || b.life <= 0) bullets.splice(i, 1);
             }
 
-            // 4. Dibujar Efectos Visuales
+            // 5. Dibujar Efectos
             for (let i = effects.length - 1; i >= 0; i--) {
                 let e = effects[i];
                 e.life--;
@@ -547,7 +556,7 @@
                     ctx.beginPath();
                     ctx.arc(e.x, e.y, e.radius - (e.radius * (e.life/30)), 0, Math.PI*2);
                     ctx.strokeStyle = e.color;
-                    ctx.globalAlpha = e.life / 30;
+                    ctx.globalAlpha = Math.max(0, e.life / 30);
                     ctx.lineWidth = 5;
                     ctx.stroke();
                     ctx.globalAlpha = 1;
