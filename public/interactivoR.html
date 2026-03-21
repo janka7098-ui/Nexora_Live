@@ -8,12 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
 
 body{
 background:#0a0a12;
@@ -41,6 +36,48 @@ border:none;
 background:#151525;
 color:white;
 margin-bottom:20px;
+}
+
+/* SELECTOR PRO */
+.selector{
+position:relative;
+width:250px;
+}
+
+.selected{
+background:#1b1b2b;
+padding:10px;
+border-radius:8px;
+cursor:pointer;
+}
+
+.dropdown{
+position:absolute;
+width:100%;
+max-height:250px;
+overflow-y:auto;
+background:#11111c;
+border-radius:10px;
+margin-top:5px;
+display:none;
+z-index:10;
+}
+
+.item{
+display:flex;
+align-items:center;
+gap:10px;
+padding:10px;
+cursor:pointer;
+}
+
+.item:hover{
+background:#1f1f2e;
+}
+
+.item img{
+width:30px;
+height:30px;
 }
 
 .add-box{
@@ -93,43 +130,44 @@ margin-top:20px;
 width:100%;
 padding:14px;
 background:linear-gradient(90deg,#6d28d9,#00ffa6);
-color:white;
-font-weight:700;
 border:none;
 border-radius:10px;
+color:white;
+font-weight:700;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-Lexora Interactive PRO 🚀
-</div>
+<div class="header">Lexora Interactive PRO 🚀</div>
 
 <div class="container">
 
 <input class="search" placeholder="Buscar evento..." onkeyup="filter()" id="search">
 
-<!-- CREAR EVENTO -->
 <div class="add-box">
 
 <select id="type">
-  <option value="gift">🎁 Gift</option>
-  <option value="like">❤️ Like (meta)</option>
-  <option value="follow">➕ Follow</option>
+<option value="gift">🎁 Gift</option>
+<option value="like">❤️ Like (cada X)</option>
+<option value="follow">➕ Follow</option>
 </select>
 
-<input id="newGift" placeholder="Nombre (solo gift)" list="giftList">
+<!-- SELECTOR VISUAL -->
+<div id="giftSelector" class="selector">
+<div class="selected" onclick="toggleDropdown()">
+<span id="selectedText">Seleccionar regalo</span>
+</div>
+<div id="dropdown" class="dropdown"></div>
+</div>
+
 <input id="newParts" placeholder="Parts (-5)">
-<input id="targetLikes" placeholder="Meta likes (ej: 50000)">
+<input id="targetLikes" placeholder="Cada cuantos likes (ej: 200)">
 <button class="btn test" onclick="add()">Agregar</button>
 
 </div>
 
-<datalist id="giftList"></datalist>
-
-<!-- TABLA -->
 <table class="table" id="table">
 <tr>
 <th>Tipo</th>
@@ -140,43 +178,60 @@ Lexora Interactive PRO 🚀
 </tr>
 </table>
 
-<button class="save" onclick="save()">Guardar configuración</button>
+<button class="save" onclick="save()">Guardar</button>
 
 </div>
 
 <script>
 
 let events = JSON.parse(localStorage.getItem("events")) || {}
+let selectedGift = ""
 let giftImages = {}
 
-const table = document.getElementById("table")
+function toggleDropdown(){
+const d = document.getElementById("dropdown")
+d.style.display = d.style.display === "block" ? "none" : "block"
+}
 
-// 🔥 CARGAR REGALOS DEL SERVER
+// 🔥 CARGAR REGALOS
 async function loadGifts(){
-  try{
-    const res = await fetch("/gift-list");
-    const gifts = await res.json();
+try{
+const res = await fetch("/gift-list")
+const gifts = await res.json()
 
-    const datalist = document.getElementById("giftList");
+const dropdown = document.getElementById("dropdown")
 
-    gifts.forEach(g=>{
-      giftImages[g.name.toLowerCase()] = g.image;
+gifts.forEach(g=>{
 
-      const option = document.createElement("option");
-      option.value = g.name;
-      datalist.appendChild(option);
-    });
+giftImages[g.name.toLowerCase()] = g.image
 
-    console.log("🎁 Gifts cargados:", gifts.length);
+const div = document.createElement("div")
+div.className = "item"
 
-  }catch(err){
-    console.log("❌ Error cargando gifts");
-  }
+div.innerHTML = `
+<img src="${g.image}">
+<span>${g.name}</span>
+`
+
+div.onclick = ()=>{
+selectedGift = g.name
+document.getElementById("selectedText").innerText = g.name
+dropdown.style.display = "none"
+}
+
+dropdown.appendChild(div)
+
+})
+
+}catch(err){
+console.log("error gifts")
+}
 }
 
 loadGifts()
 
-// 🔥 RENDER
+const table = document.getElementById("table")
+
 function render(){
 
 table.innerHTML = `
@@ -192,7 +247,6 @@ table.innerHTML = `
 Object.keys(events).forEach(name=>{
 
 const e = events[name]
-
 const img = giftImages[name?.toLowerCase()]
 
 const row = document.createElement("tr")
@@ -203,8 +257,8 @@ row.innerHTML = `
 
 <td>
 <div style="display:flex;align-items:center;gap:10px;">
-  ${img ? `<img src="${img}" style="width:30px;height:30px">` : ""}
-  ${name}
+${img ? `<img src="${img}" style="width:30px;height:30px">` : ""}
+${name}
 </div>
 </td>
 
@@ -231,30 +285,29 @@ table.appendChild(row)
 function add(){
 
 const type = document.getElementById("type").value
-const gift = document.getElementById("newGift").value
 const parts = Number(document.getElementById("newParts").value)
 const targetLikes = Number(document.getElementById("targetLikes").value)
 
 let key = ""
 
 if(type === "gift"){
-  if(!gift) return alert("Pon nombre del gift")
-  key = gift
+if(!selectedGift) return alert("Selecciona un regalo")
+key = selectedGift
 }
 
 if(type === "like"){
-  if(!targetLikes) return alert("Pon meta de likes")
-  key = "like_"+targetLikes
+if(!targetLikes) return alert("Pon número de likes")
+key = "like_"+targetLikes
 }
 
 if(type === "follow"){
-  key = "follow"
+key = "follow"
 }
 
 events[key] = {
-  type,
-  parts,
-  targetLikes: type === "like" ? targetLikes : null
+type,
+parts,
+targetLikes: type === "like" ? targetLikes : null
 }
 
 render()
@@ -290,17 +343,14 @@ console.log("TEST:", name)
 
 function save(){
 localStorage.setItem("events",JSON.stringify(events))
-alert("Guardado correctamente ✅")
+alert("Guardado ✅")
 }
 
 function filter(){
-
 const s = document.getElementById("search").value.toLowerCase()
-
 document.querySelectorAll(".row").forEach(r=>{
 r.style.display = r.innerText.toLowerCase().includes(s) ? "" : "none"
 })
-
 }
 
 render()
