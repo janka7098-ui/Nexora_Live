@@ -22,7 +22,6 @@
             background: radial-gradient(circle at center, #1a0b2e 0%, #050507 100%); 
         }
 
-        /* Estilos para el panel DEV */
         .dev-panel {
             background: rgba(10, 10, 15, 0.85);
             backdrop-filter: blur(12px);
@@ -54,7 +53,7 @@
         }
 
         .gift-mapping h3, .skill-meaning h3 {
-            color: #FFD700; /* Gold */
+            color: #FFD700;
             text-transform: uppercase;
             font-weight: 700;
         }
@@ -81,8 +80,8 @@
                 NEXORA <span class="text-white">ARENA Live</span>
             </h1>
             <div id="status" class="flex items-center gap-2 mt-1">
-                <div id="status-dot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                <span id="status-text" class="text-[10px] font-bold text-red-500 uppercase tracking-[4px]">Desconectado</span>
+                <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span id="status-text" class="text-[10px] font-bold text-green-500 uppercase tracking-[4px]">Conectado</span>
             </div>
         </div>
         
@@ -94,137 +93,210 @@
     <aside class="dev-panel absolute top-6 right-6 w-[300px] max-h-[calc(100vh-48px)] p-5 rounded-2xl overflow-y-auto z-50 flex flex-col gap-5">
         <section>
             <h2 class="text-cyan-400 text-sm tracking-widest mb-3 flex items-center gap-2">
-                <i data-lucide="wrench" class="w-4 h-4"></i> DEV PANEL
+                DEV PANEL
             </h2>
             <div class="flex flex-col gap-2 text-white">
-                <button onclick="spawnTestBot()" class="btn-dev w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 border-purple-500/50 hover:border-purple-500 text-purple-300">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i> Spawn Player
+                <button onclick="spawnTestBot()" class="btn-dev w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 border-cyan-500/50 hover:border-cyan-500 text-cyan-300">
+                    <span class="text-lg leading-none">+</span> Spawn Player
                 </button>
-                <button class="btn-dev w-full py-2 rounded-lg font-bold text-xs">🔫 Shoot</button>
-                <button class="btn-dev w-full py-2 rounded-lg font-bold text-xs">💥 Rampage</button>
-                <button class="btn-dev w-full py-2 rounded-lg font-bold text-xs">🌪️ Storm</button>
-                <button class="btn-dev w-full py-2 rounded-lg font-bold text-xs">⚡ Shock</button>
-                <button class="btn-dev w-full py-2 rounded-lg font-bold text-xs">⚔️ Blade</button>
-                <button class="btn-dev w-full py-2 rounded-lg font-bold text-xs text-red-400 border-red-500/30">👾 Boss Test</button>
+                <button onclick="testPower('shoot')" class="btn-dev w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 border-green-500/30">🔫 Shoot</button>
+                <button onclick="testPower('rampage')" class="btn-dev w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 border-red-500/30">💥 Rampage</button>
+                <button onclick="testPower('storm')" class="btn-dev w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 border-gray-400/30">🌪️ Storm</button>
+                <button onclick="testPower('shock')" class="btn-dev w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 border-yellow-500/30">⚡ Shock</button>
+                <button onclick="testPower('blade')" class="btn-dev w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 border-purple-500/30">⚔️ Blade</button>
+                <button onclick="spawnBoss()" class="btn-dev w-full py-2 rounded-lg font-bold text-xs text-red-400 border-red-500/50 mt-2 hover:bg-red-900/20">👾 Boss Test</button>
             </div>
         </section>
 
         <section class="gift-mapping text-sm font-mono space-y-2 border-t border-zinc-800 pt-4">
             <h3>🎁 Gift Mapping</h3>
             <p>LIKE -> ⚔️ Blade Lv1</p>
-            <p>FOLLOW -> ⚔️ Blade Lv3</p>
-            <p>SHARE -> ⚔️ Blade Lv3</p>
-            <p>MEMBER -> ⚔️ Blade Lv3 + 🔫 Shoot</p>
-            
-            <p>1 coin -> ⚔️ Blade Lv4</p>
-            <p>&leq; 5 coin -> ⚔️ Blade Lv5</p>
-            <p>&leq; 10 coin -> ⭐️ Lv3 + 🔫 Shoot</p>
-            <p>&leq; 20 coin -> 🌟 Lv4 + 💥 Rampage</p>
-            <p>&leq; 30 coin -> 🌠 Lv4 + ⚡ Shock</p>
-            <p>&leq; 100 coin -> 🌪️ Storm + ⚔️ Lv4</p>
-            <p>&leq; 199 coin -> ⚡ Shock + 💥 Rampage</p>
-            <p>> 199 coin -> 💎 ALL COMBO</p>
+            <p>SHARE -> 🔫 Multi-Shoot</p>
+            <p>MEMBER -> 🌪️ Caotic Storm</p>
+        </section>
+
+        <section class="skill-meaning text-xs font-mono space-y-1.5 border-t border-zinc-800 pt-4 text-zinc-400">
+            <h3>📖 Skill Meaning</h3>
+            <p><span class="text-purple-400">⚔️ Blade:</span> Orbital rotating saws</p>
+            <p><span class="text-green-400">🔫 Shoot:</span> Burst of energy projectiles</p>
+            <p><span class="text-yellow-400">⚡ Shock:</span> AOE electric pulse</p>
+            <p><span class="text-red-400">💥 Rampage:</span> High-speed charge</p>
+            <p><span class="text-gray-300">🌪️ Storm:</span> 360° Bullet Hell</p>
         </section>
     </aside>
 
     <canvas id="canvas"></canvas>
 
     <script>
-        const socket = io();
+        // --- CONFIGURACIÓN BASE ---
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
-        const statusText = document.getElementById('status-text');
-        const statusDot = document.getElementById('status-dot');
-
+        
         let avatars = {}; 
         let effects = []; 
+        let bullets = []; // Array para guardar las bolitas de la pistola
         
-        // Variables de la caja de la arena
         let arenaBox = { x: 0, y: 0, w: 0, h: 0 };
 
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            
-            // Recalcular la zona de combate visual
-            // Dejamos margen arriba (para el botón y título), izquierda, abajo, y derecha (para el panel dev)
             arenaBox.x = 24; 
             arenaBox.y = 120; 
-            arenaBox.w = canvas.width - 360; // Descuenta 300px del panel + margenes
+            arenaBox.w = canvas.width - 360; 
             arenaBox.h = canvas.height - 144;
         }
         window.onresize = resize;
         resize();
 
+        // --- SISTEMA DE BALAS (SHOOT / STORM) ---
+        class Bullet {
+            constructor(x, y, vx, vy, color, ownerId, dmg) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.ownerId = ownerId;
+                this.dmg = dmg;
+                this.radius = 6;
+                this.life = 150; // Tiempo de vida de la bala
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+
+                // Rebote en las paredes de la arena
+                if (this.x - this.radius < arenaBox.x || this.x + this.radius > arenaBox.x + arenaBox.w) this.vx *= -1;
+                if (this.y - this.radius < arenaBox.y || this.y + this.radius > arenaBox.y + arenaBox.h) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = "#FFF";
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                
+                // Estela (trail)
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - this.vx * 3, this.y - this.vy * 3);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        }
+
         // --- CLASE JUGADOR (AVATAR) ---
         class Avatar {
             constructor(data) {
                 this.id = data.username;
-                
-                // Aparecen de forma aleatoria dentro de los límites superiores de la Arena
-                this.radius = 35; 
+                this.radius = data.isBoss ? 60 : 35; 
                 this.x = arenaBox.x + Math.random() * (arenaBox.w - this.radius * 2) + this.radius;
                 this.y = arenaBox.y + this.radius + 10;
                 
-                this.vx = (Math.random() - 0.5) * 10;
+                this.vx = (Math.random() - 0.5) * 6;
                 this.vy = 2;
                 
                 this.color = data.color || '#00FFFF';
-                this.hp = 500 + Math.floor(Math.random() * 500); 
-                this.maxHp = this.hp;
+                this.maxHp = data.isBoss ? 5000 : 500 + Math.floor(Math.random() * 500); 
+                this.hp = this.maxHp;
+                
                 this.img = new Image();
-                this.img.src = data.profilePic || 'https://via.placeholder.com/100';
-                this.lastAttack = Date.now();
+                this.img.src = data.profilePic || `https://api.dicebear.com/7.x/avataaars/svg?seed=${this.id}`;
+                
+                // Estados de Poderes
+                this.isRampaging = false;
+                this.rampageTimer = 0;
+                this.hasBlade = false;
+                this.bladeTimer = 0;
+                this.bladeAngle = 0;
             }
 
             update() {
-                // Física básica
-                this.vy += 0.2; // Gravedad
+                // Fricción y Gravedad normal (si no está en Rampage)
+                if (!this.isRampaging) {
+                    this.vy += 0.1; // Gravedad suave
+                    this.vx *= 0.99;
+                    this.vy *= 0.99;
+                } else {
+                    // Si está en Rampage, deja una estela de fuego
+                    this.rampageTimer--;
+                    if (this.rampageTimer % 3 === 0) {
+                        effects.push({ type: 'trail', x: this.x, y: this.y, color: '#FF3131', life: 15, radius: this.radius });
+                    }
+                    if (this.rampageTimer <= 0) {
+                        this.isRampaging = false;
+                        this.vx *= 0.3; // Frena tras la embestida
+                        this.vy *= 0.3;
+                    }
+                }
+
                 this.x += this.vx;
                 this.y += this.vy;
 
-                // Límites contra la "Caja de la Arena" visual
-                if (this.x + this.radius > arenaBox.x + arenaBox.w) {
-                    this.x = arenaBox.x + arenaBox.w - this.radius;
-                    this.vx *= -0.8; // Pared Derecha
-                }
-                if (this.x - this.radius < arenaBox.x) {
-                    this.x = arenaBox.x + this.radius;
-                    this.vx *= -0.8; // Pared Izquierda
-                }
-                if (this.y + this.radius > arenaBox.y + arenaBox.h) {
-                    this.y = arenaBox.y + arenaBox.h - this.radius;
-                    this.vy *= -0.6; // Suelo
-                }
-                if (this.y - this.radius < arenaBox.y) {
-                    this.y = arenaBox.y + this.radius;
-                    this.vy *= -1; // Techo
-                }
+                // Rebotes con la Caja de Arena
+                if (this.x + this.radius > arenaBox.x + arenaBox.w) { this.x = arenaBox.x + arenaBox.w - this.radius; this.vx *= -0.8; }
+                if (this.x - this.radius < arenaBox.x) { this.x = arenaBox.x + this.radius; this.vx *= -0.8; }
+                if (this.y + this.radius > arenaBox.y + arenaBox.h) { this.y = arenaBox.y + arenaBox.h - this.radius; this.vy *= -0.8; }
+                if (this.y - this.radius < arenaBox.y) { this.y = arenaBox.y + this.radius; this.vy *= -0.8; }
 
-                // Fricción ligera
-                this.vx *= 0.99;
+                // Lógica de Blades (Sierras)
+                if (this.hasBlade) {
+                    this.bladeTimer--;
+                    this.bladeAngle += 0.15; // Velocidad de giro
+                    
+                    // Dañar a los que toquen la sierra
+                    for (let otherId in avatars) {
+                        if (otherId !== this.id) {
+                            let other = avatars[otherId];
+                            let dist = Math.hypot(this.x - other.x, this.y - other.y);
+                            if (dist < this.radius + other.radius + 30) { // 30 es la distancia de la sierra
+                                other.takeDamage(1); // Daño continuo por frame
+                            }
+                        }
+                    }
 
-                // Lógica de ataque cada 2-4 segundos
-                if (Date.now() - this.lastAttack > 2500) {
-                    this.attack();
-                    this.lastAttack = Date.now() + (Math.random() * 1000);
+                    if (this.bladeTimer <= 0) this.hasBlade = false;
                 }
             }
 
             draw() {
                 ctx.save();
                 
-                // Aura brillante
+                // Dibujar Sierras (Blade Power)
+                if (this.hasBlade) {
+                    const sawDist = this.radius + 25;
+                    for(let i=0; i<3; i++) { // 3 sierras girando
+                        let angle = this.bladeAngle + (i * ((Math.PI * 2) / 3));
+                        let sawX = this.x + Math.cos(angle) * sawDist;
+                        let sawY = this.y + Math.sin(angle) * sawDist;
+                        
+                        ctx.beginPath();
+                        ctx.arc(sawX, sawY, 12, 0, Math.PI * 2);
+                        ctx.fillStyle = "#8A2BE2"; // Morado
+                        ctx.shadowColor = "#8A2BE2";
+                        ctx.shadowBlur = 10;
+                        ctx.fill();
+                    }
+                }
+
+                // Aura del jugador
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius + 4, 0, Math.PI * 2);
-                ctx.strokeStyle = this.color;
-                ctx.lineWidth = 3;
-                ctx.shadowColor = this.color;
+                ctx.strokeStyle = this.isRampaging ? "#FF3131" : this.color;
+                ctx.lineWidth = this.isRampaging ? 6 : 3;
+                ctx.shadowColor = this.isRampaging ? "#FF3131" : this.color;
                 ctx.shadowBlur = 15;
                 ctx.stroke();
                 ctx.closePath();
 
-                // Imagen de perfil circular
+                // Imagen de perfil
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 ctx.clip();
@@ -235,98 +307,217 @@
                 }
                 ctx.restore();
 
-                // Número de HP Central
+                // HP y Nombre
                 ctx.fillStyle = "white";
-                ctx.font = "900 18px Rajdhani";
+                ctx.font = "900 16px Rajdhani";
                 ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.strokeStyle = "rgba(0,0,0,0.8)";
+                ctx.strokeStyle = "rgba(0,0,0,0.9)";
                 ctx.lineWidth = 4;
-                ctx.strokeText(Math.floor(this.hp), this.x, this.y);
-                ctx.fillText(Math.floor(this.hp), this.x, this.y);
+                ctx.strokeText(Math.floor(this.hp), this.x, this.y + this.radius + 18);
+                ctx.fillText(Math.floor(this.hp), this.x, this.y + this.radius + 18);
 
-                // Nombre
-                ctx.fillStyle = "rgba(255,255,255,0.9)";
+                ctx.fillStyle = this.color;
                 ctx.font = "bold 13px Rajdhani";
-                ctx.shadowColor = "black";
-                ctx.shadowBlur = 4;
-                ctx.fillText(this.id.toUpperCase(), this.x, this.y + this.radius + 16);
+                ctx.strokeText(this.id, this.x, this.y + this.radius + 32);
+                ctx.fillText(this.id, this.x, this.y + this.radius + 32);
             }
 
-            attack() {
-                // Atacar solo a objetivos dentro de la Arena
-                let targets = Object.values(avatars).filter(a => a.id !== this.id);
-                if (targets.length === 0) return;
-
-                let target = targets[Math.floor(Math.random() * targets.length)];
-                let dist = Math.sqrt((this.x - target.x)**2 + (this.y - target.y)**2);
-
-                if (dist < 500) {
-                    // Efecto de Rayo
-                    effects.push({
-                        type: 'lightning',
-                        x1: this.x, y1: this.y,
-                        x2: target.x, y2: target.y,
-                        color: this.color,
-                        life: 12
-                    });
-
-                    // Daño
-                    let dmg = 20 + Math.floor(Math.random() * 40);
-                    target.hp -= dmg;
-
-                    // Texto de daño
-                    effects.push({
-                        type: 'dmg_text',
-                        x: target.x, y: target.y - 20,
-                        text: `-${dmg}`,
-                        life: 50
-                    });
+            takeDamage(amount) {
+                this.hp -= amount;
+                if(Math.random() > 0.7) { // No saturar con demasiados textos si es daño continuo
+                    effects.push({ type: 'dmg_text', x: this.x, y: this.y - this.radius, text: `-${Math.floor(amount)}`, life: 40 });
                 }
             }
         }
 
-        // --- GENERADOR DE BOTS (Solo para prueba) ---
+        // --- SISTEMA DE PODERES ---
+
+        // 1. SHOOT (Pistola): Dispara balas hacia un objetivo
+        function powerShoot(user) {
+            let targets = Object.values(avatars).filter(a => a.id !== user.id);
+            if (targets.length === 0) return;
+            
+            // Elegir objetivo al azar
+            let target = targets[Math.floor(Math.random() * targets.length)];
+            
+            // Calcular dirección
+            let angle = Math.atan2(target.y - user.y, target.x - user.x);
+            
+            // Disparar 3 balas en ráfaga (con un pequeño margen de error)
+            for(let i = -1; i <= 1; i++) {
+                let spread = angle + (i * 0.15);
+                let speed = 12;
+                bullets.push(new Bullet(
+                    user.x, user.y, 
+                    Math.cos(spread) * speed, Math.sin(spread) * speed, 
+                    "#39FF14", user.id, 25 // 25 de daño por bala
+                ));
+            }
+        }
+
+        // 2. STORM (Tormenta): Dispara balas en 360 grados
+        function powerStorm(user) {
+            let numBullets = 12;
+            for(let i = 0; i < numBullets; i++) {
+                let angle = (i * (Math.PI * 2)) / numBullets;
+                let speed = 8;
+                bullets.push(new Bullet(
+                    user.x, user.y, 
+                    Math.cos(angle) * speed, Math.sin(angle) * speed, 
+                    "#FFF", user.id, 15
+                ));
+            }
+        }
+
+        // 3. SHOCK (Choque Eléctrico): Daño en área (AOE) instantáneo
+        function powerShock(user) {
+            let range = 300; // Rango del rayo
+            let hitSomeone = false;
+
+            for (let otherId in avatars) {
+                if (otherId !== user.id) {
+                    let other = avatars[otherId];
+                    let dist = Math.hypot(user.x - other.x, user.y - other.y);
+                    
+                    if (dist < range) {
+                        hitSomeone = true;
+                        other.takeDamage(50); // Daño directo
+                        // Dibujar rayo
+                        effects.push({
+                            type: 'lightning',
+                            x1: user.x, y1: user.y, x2: other.x, y2: other.y,
+                            color: "#FFD700", life: 15
+                        });
+                    }
+                }
+            }
+
+            // Si no le dio a nadie, dibuja un anillo eléctrico fallido
+            if(!hitSomeone) {
+                effects.push({ type: 'shockwave', x: user.x, y: user.y, color: "#FFD700", radius: range, life: 20 });
+            }
+        }
+
+        // 4. RAMPAGE (Embestida): Carga rápida hacia el enemigo más cercano
+        function powerRampage(user) {
+            let targets = Object.values(avatars).filter(a => a.id !== user.id);
+            if (targets.length === 0) return;
+            
+            let target = targets.sort((a,b) => Math.hypot(user.x - a.x, user.y - a.y) - Math.hypot(user.x - b.x, user.y - b.y))[0];
+            
+            let angle = Math.atan2(target.y - user.y, target.x - user.x);
+            let speed = 25; // Velocidad absurda
+            
+            user.vx = Math.cos(angle) * speed;
+            user.vy = Math.sin(angle) * speed;
+            user.isRampaging = true;
+            user.rampageTimer = 30; // Dura medio segundo de carga
+        }
+
+        // 5. BLADE (Sierras): Activa el aura cortante
+        function powerBlade(user) {
+            user.hasBlade = true;
+            user.bladeTimer = 300; // Dura ~5 segundos
+        }
+
+        // --- BOTONES DEV PANEL ---
         function spawnTestBot() {
             const id = "User_" + Math.floor(Math.random()*999);
             avatars[id] = new Avatar({
                 username: id,
-                profilePic: `https://i.pravatar.cc/150?u=${id}`,
-                color: ["#00FFFF", "#8A2BE2", "#39FF14", "#FF3131", "#FFD700", "#FF00FF"][Math.floor(Math.random()*6)]
+                color: ["#00FFFF", "#8A2BE2", "#39FF14", "#FF3131", "#FFD700"][Math.floor(Math.random()*5)]
             });
         }
 
-        // --- BUCLE DE RENDERIZADO ---
+        function spawnBoss() {
+            avatars["BOSS_KAIJU"] = new Avatar({
+                username: "BOSS_KAIJU",
+                color: "#FF0000",
+                isBoss: true
+            });
+        }
+
+        function testPower(powerName) {
+            let users = Object.values(avatars);
+            if(users.length === 0) { alert("¡Aparece un jugador primero!"); return; }
+            let randomUser = users[Math.floor(Math.random() * users.length)];
+            
+            if(powerName === 'shoot') powerShoot(randomUser);
+            if(powerName === 'rampage') powerRampage(randomUser);
+            if(powerName === 'storm') powerStorm(randomUser);
+            if(powerName === 'shock') powerShock(randomUser);
+            if(powerName === 'blade') powerBlade(randomUser);
+        }
+
+        // --- BUCLE PRINCIPAL (RENDER Y FÍSICA) ---
         function loop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Dibujar la Caja de Arena Visual
+            // 1. Dibujar Caja de Arena
             ctx.save();
             ctx.strokeStyle = "rgba(0, 255, 255, 0.4)";
             ctx.lineWidth = 2;
             ctx.shadowColor = "rgba(0, 255, 255, 0.6)";
             ctx.shadowBlur = 20;
-            ctx.fillStyle = "rgba(10, 10, 15, 0.4)"; // Fondo oscuro translúcido para el cuadrilátero
-            
+            ctx.fillStyle = "rgba(10, 10, 15, 0.4)"; 
             ctx.beginPath();
-            // Compatibilidad para dibujar caja con bordes redondeados
-            if (ctx.roundRect) {
-                ctx.roundRect(arenaBox.x, arenaBox.y, arenaBox.w, arenaBox.h, 16);
-            } else {
-                ctx.rect(arenaBox.x, arenaBox.y, arenaBox.w, arenaBox.h);
-            }
-            ctx.fill();
-            ctx.stroke();
+            if (ctx.roundRect) ctx.roundRect(arenaBox.x, arenaBox.y, arenaBox.w, arenaBox.h, 16);
+            else ctx.rect(arenaBox.x, arenaBox.y, arenaBox.w, arenaBox.h);
+            ctx.fill(); ctx.stroke();
             ctx.restore();
 
             // 2. Actualizar Avatares
             for (let id in avatars) {
                 avatars[id].update();
                 avatars[id].draw();
-                if (avatars[id].hp <= 0) delete avatars[id];
+                
+                // Si alguien en Rampage choca con otro, le hace daño masivo
+                if(avatars[id].isRampaging) {
+                    for(let otherId in avatars) {
+                        if(id !== otherId) {
+                            let other = avatars[otherId];
+                            if(Math.hypot(avatars[id].x - other.x, avatars[id].y - other.y) < avatars[id].radius + other.radius) {
+                                other.takeDamage(100);
+                                avatars[id].isRampaging = false; // Se detiene al chocar
+                                avatars[id].vx *= -0.5; // Rebote
+                            }
+                        }
+                    }
+                }
+
+                // Borrar muertos
+                if (avatars[id].hp <= 0) {
+                    // Explosión de muerte
+                    effects.push({ type: 'shockwave', x: avatars[id].x, y: avatars[id].y, color: avatars[id].color, radius: 100, life: 30 });
+                    delete avatars[id];
+                }
             }
 
-            // 3. Dibujar Efectos
+            // 3. Actualizar Balas
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.update();
+                b.draw();
+
+                // Colisión Bala vs Avatares
+                let hit = false;
+                for (let id in avatars) {
+                    if (id !== b.ownerId) {
+                        let target = avatars[id];
+                        if (Math.hypot(b.x - target.x, b.y - target.y) < target.radius + b.radius) {
+                            target.takeDamage(b.dmg);
+                            hit = true;
+                            // Pequeña explosión al golpear
+                            effects.push({ type: 'shockwave', x: b.x, y: b.y, color: b.color, radius: 20, life: 10 });
+                            break;
+                        }
+                    }
+                }
+
+                if (hit || b.life <= 0) bullets.splice(i, 1);
+            }
+
+            // 4. Dibujar Efectos Visuales
             for (let i = effects.length - 1; i >= 0; i--) {
                 let e = effects[i];
                 e.life--;
@@ -334,19 +525,32 @@
                 if (e.type === 'lightning') {
                     ctx.beginPath();
                     ctx.moveTo(e.x1, e.y1);
-                    ctx.lineTo((e.x1 + e.x2)/2 + (Math.random()-0.5)*40, (e.y1 + e.y2)/2 + (Math.random()-0.5)*40);
+                    ctx.lineTo((e.x1 + e.x2)/2 + (Math.random()-0.5)*50, (e.y1 + e.y2)/2 + (Math.random()-0.5)*50);
                     ctx.lineTo(e.x2, e.y2);
                     ctx.strokeStyle = "white";
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 4;
                     ctx.shadowColor = e.color;
-                    ctx.shadowBlur = 15;
+                    ctx.shadowBlur = 20;
                     ctx.stroke();
                 } else if (e.type === 'dmg_text') {
-                    ctx.fillStyle = `rgba(255, 49, 49, ${e.life/50})`;
+                    ctx.fillStyle = `rgba(255, 49, 49, ${e.life/40})`;
                     ctx.font = "900 24px Rajdhani";
                     ctx.shadowColor = "black";
                     ctx.shadowBlur = 5;
-                    ctx.fillText(e.text, e.x, e.y - (50 - e.life));
+                    ctx.fillText(e.text, e.x, e.y - (40 - e.life));
+                } else if (e.type === 'trail') {
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.radius * (e.life/15), 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(255, 49, 49, ${e.life/30})`;
+                    ctx.fill();
+                } else if (e.type === 'shockwave') {
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.radius - (e.radius * (e.life/30)), 0, Math.PI*2);
+                    ctx.strokeStyle = e.color;
+                    ctx.globalAlpha = e.life / 30;
+                    ctx.lineWidth = 5;
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
                 }
 
                 if (e.life <= 0) effects.splice(i, 1);
@@ -355,17 +559,7 @@
             requestAnimationFrame(loop);
         }
 
-        // Inicializar Lucide Icons
         lucide.createIcons();
-
-        // Eventos de Socket
-        socket.on('spawnPlayer', (data) => avatars[data.username] = new Avatar(data));
-        socket.on('connect', () => {
-            statusText.innerText = "Arena Live Conectada";
-            statusText.classList.replace('text-red-500', 'text-green-500');
-            statusDot.classList.replace('bg-red-500', 'bg-green-500');
-        });
-
         loop();
     </script>
 </body>
