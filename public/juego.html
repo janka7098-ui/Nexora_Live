@@ -106,7 +106,7 @@
                     <label>Tamaño Arena:</label>
                     <span id="lbl-arena-size" class="text-cyan-400">100%</span>
                 </div>
-                <input type="range" id="cfg-arena-size" min="0.4" max="1" step="0.05" value="1" class="w-full accent-cyan-500 cursor-pointer mt-1">
+                <input type="range" id="cfg-arena-size" min="0.4" max="2" step="0.05" value="1" class="w-full accent-cyan-500 cursor-pointer mt-1">
             </div>
         </section>
 
@@ -178,6 +178,8 @@
             arenaBox.w = maxW * arenaScale;
             arenaBox.h = maxH * arenaScale;
             
+            // Centramos la arena dinámicamente. Si scale > 1, los valores 'x' e 'y' se volverán 
+            // negativos o menores al margen de seguridad, expandiéndose por detrás de los menús.
             arenaBox.x = 24 + (maxW - arenaBox.w) / 2;
             arenaBox.y = 120 + (maxH - arenaBox.h) / 2;
 
@@ -245,12 +247,10 @@
                 this.points = data.points || startPoints; 
                 this.kills = 0; 
                 
-                // === AQUI ESTÁ LA MAGIA PARA QUE SE VEA EL AVATAR ===
                 this.img = new Image();
-                this.img.crossOrigin = "Anonymous"; // Permite que el Canvas dibuje la imagen externa sin bloqueos
+                this.img.crossOrigin = "Anonymous"; 
                 
                 if (data.profilePic) {
-                    // Usamos el proxy para asegurar que la imagen de TikTok no tenga problemas de CORS
                     this.img.src = `/avatar-proxy?url=${encodeURIComponent(data.profilePic)}`;
                 } else {
                     this.img.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${this.id}`;
@@ -340,7 +340,6 @@
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 ctx.clip();
-                // Verificamos que la imagen esté cargada correctamente para dibujarla
                 if (this.img.complete && this.img.naturalWidth > 0) {
                     ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
                 } else {
