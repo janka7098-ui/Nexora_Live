@@ -1,1 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lexora Interactive</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+background:#0a0a12;
+color:white;
+}
+
+.header{
+padding:20px;
+background:linear-gradient(90deg,#6d28d9,#00ffa6);
+font-weight:700;
+}
+
+.container{
+padding:20px;
+max-width:1000px;
+margin:auto;
+}
+
+.search{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:none;
+background:#151525;
+color:white;
+margin-bottom:20px;
+}
+
+.add-box{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+flex-wrap:wrap;
+}
+
+input,select{
+padding:10px;
+border-radius:8px;
+border:none;
+background:#1b1b2b;
+color:white;
+}
+
+.table{
+width:100%;
+border-collapse:collapse;
+}
+
+.table th{
+padding:12px;
+color:#00ffa6;
+text-align:left;
+}
+
+.row td{
+padding:12px;
+background:#11111c;
+}
+
+.btn{
+padding:8px 12px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:600;
+}
+
+.test{
+background:#00ffa6;
+color:black;
+}
+
+.save{
+margin-top:20px;
+width:100%;
+padding:14px;
+background:linear-gradient(90deg,#6d28d9,#00ffa6);
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+Lexora Interactive (PRO)
+</div>
+
+<div class="container">
+
+<input class="search" placeholder="Buscar..." onkeyup="filter()" id="search">
+
+<!-- CREAR EVENTO -->
+<div class="add-box">
+
+<select id="type">
+  <option value="gift">🎁 Gift</option>
+  <option value="like">❤️ Like (meta)</option>
+  <option value="follow">➕ Follow</option>
+</select>
+
+<input id="newGift" placeholder="Nombre (solo gift)">
+<input id="newParts" placeholder="Parts (-5)">
+<input id="targetLikes" placeholder="Meta likes (ej: 50000)">
+<button class="btn test" onclick="add()">Agregar</button>
+
+</div>
+
+<!-- TABLA -->
+<table class="table" id="table">
+<tr>
+<th>Tipo</th>
+<th>Nombre</th>
+<th>Parts</th>
+<th>Meta</th>
+<th>Test</th>
+<th></th>
+</tr>
+</table>
+
+<button class="save" onclick="save()">Guardar</button>
+
+</div>
+
+<script>
+
+let events = JSON.parse(localStorage.getItem("events")) || {}
+
+const table = document.getElementById("table")
+
+function render(){
+
+table.innerHTML = `
+<tr>
+<th>Tipo</th>
+<th>Nombre</th>
+<th>Parts</th>
+<th>Meta</th>
+<th>Test</th>
+<th></th>
+</tr>
+`
+
+Object.keys(events).forEach(name=>{
+
+const e = events[name]
+
+const row = document.createElement("tr")
+row.className="row"
+
+row.innerHTML = `
+<td>${e.type}</td>
+<td>${name}</td>
+
+<td>
+<input value="${e.parts}" onchange="update('${name}',this.value)">
+</td>
+
+<td>
+${e.type === "like" ? e.targetLikes || "-" : "-"}
+</td>
+
+<td>
+<input id="test-${name}" value="1">
+</td>
+
+<td>
+<button class="btn test" onclick="test('${name}')">TEST</button>
+</td>
+`
+
+table.appendChild(row)
+
+})
+
+}
+
+function add(){
+
+const type = document.getElementById("type").value
+const gift = document.getElementById("newGift").value
+const parts = Number(document.getElementById("newParts").value)
+const targetLikes = Number(document.getElementById("targetLikes").value)
+
+let key = ""
+
+if(type === "gift"){
+  if(!gift) return alert("Pon nombre del gift")
+  key = gift
+}
+
+if(type === "like"){
+  if(!targetLikes) return alert("Pon meta de likes")
+  key = "like_"+targetLikes
+}
+
+if(type === "follow"){
+  key = "follow"
+}
+
+events[key] = {
+  type,
+  parts,
+  targetLikes: type === "like" ? targetLikes : null
+}
+
+render()
+
+}
+
+function update(name,value){
+events[name].parts = Number(value)
+}
+
+function test(name){
+
+const e = events[name]
+const amount = Number(document.getElementById(`test-${name}`).value)
+
+fetch("/test",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+gift:name,
+repeatCount:amount,
+parts:e.parts,
+type:e.type,
+targetLikes:e.targetLikes
+})
+})
+
+console.log("TEST:", name)
+
+}
+
+function save(){
+localStorage.setItem("events",JSON.stringify(events))
+alert("Guardado")
+}
+
+function filter(){
+
+const s = document.getElementById("search").value.toLowerCase()
+
+document.querySelectorAll(".row").forEach(r=>{
+r.style.display = r.innerText.toLowerCase().includes(s) ? "" : "none"
+})
+
+}
+
+render()
+
+</script>
+
+</body>
+</html>
