@@ -225,27 +225,28 @@
                 </div>
             </section>
             
-            
-<!-- 🔻 TODO TU CÓDIGO SE QUEDA IGUAL ARRIBA 🔻 -->
+            <div id="enlaces-protegidos" class="hidden flex-col gap-2 mt-4">
+                <div class="p-2 bg-black/40 border border-zinc-800 rounded-lg text-center mb-2">
+                    <span class="text-xs text-zinc-400 font-bold uppercase">Bienvenido: <span id="nombre-usuario" class="text-cyan-400">...</span></span>
+                    <span id="badge-admin" class="hidden ml-2 bg-purple-600 text-white text-[10px] px-2 py-1 rounded font-black tracking-widest uppercase">ADMIN</span>
+                </div>
 
-<div class="mt-2">
-    <a href="juego.html" style="display: block; background: #8A2BE2; color: white; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; text-decoration: none; border: 2px solid #00FFFF; transition: transform 0.2s ease, box-shadow 0.2s ease;"
-    onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 15px rgba(0, 255, 255, 0.4)';"
-    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
-        🎮 IR A PANTALLA DE JUEGO
-    </a>
-</div>
+                <div class="mt-2">
+                    <a href="juego.html" style="display: block; background: #8A2BE2; color: white; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; text-decoration: none; border: 2px solid #00FFFF; transition: transform 0.2s ease, box-shadow 0.2s ease;"
+                    onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 15px rgba(0, 255, 255, 0.4)';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                        🎮 IR A PANTALLA DE JUEGO
+                    </a>
+                </div>
 
-<!-- 🔥 NUEVO BOTÓN AGREGADO -->
-<div class="mt-2">
-    <a href="interactivoR.html" style="display: block; background: #00FFFF; color: black; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; text-decoration: none; border: 2px solid #8A2BE2; transition: transform 0.2s ease, box-shadow 0.2s ease;"
-    onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 15px rgba(138, 43, 226, 0.5)';"
-    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
-        ⚡ IR A PANEL INTERACTIVO
-    </a>
-</div>
-
-<!-- 🔺 TODO LO DEMÁS DE TU HTML SIGUE IGUAL 🔺 -->
+                <div class="mt-2">
+                    <a href="interactivoR.html" style="display: block; background: #00FFFF; color: black; text-align: center; padding: 15px; border-radius: 10px; font-weight: bold; text-decoration: none; border: 2px solid #8A2BE2; transition: transform 0.2s ease, box-shadow 0.2s ease;"
+                    onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 0 15px rgba(138, 43, 226, 0.5)';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none';">
+                        ⚡ IR A PANEL INTERACTIVO
+                    </a>
+                </div>
+            </div>
             
             <section class="glass flex flex-col flex-1 overflow-hidden min-h-[200px] lg:min-h-0 mt-4">
                 <div class="p-4 border-b border-zinc-900 bg-black/20 text-center"><h2 class="text-xs font-bold uppercase tracking-widest italic text-zinc-500">Historial de Sesión</h2></div>
@@ -338,11 +339,30 @@
         const btnDisconnect = document.getElementById('btn-disconnect');
         if(btnDisconnect) btnDisconnect.onclick = () => { socket.emit("stopConnection"); };
 
+        // 🔥 NUEVA LÓGICA DE AUTENTICACIÓN
+        socket.on("authSuccess", (userAccount) => {
+            sessionStorage.setItem('accesoPermitido', 'true');
+            sessionStorage.setItem('rolUsuario', userAccount.role);
+
+            document.getElementById('enlaces-protegidos').classList.remove('hidden');
+            document.getElementById('enlaces-protegidos').classList.add('flex');
+            document.getElementById('nombre-usuario').innerText = userAccount.name;
+
+            if(userAccount.role === "admin") {
+                document.getElementById('badge-admin').classList.remove('hidden');
+            }
+        });
+
         socket.on("status", (status) => {
             if(isOverlay) return; document.getElementById('loader').style.display = 'none';
             const sText = document.getElementById('connection-status'); const sPulse = document.getElementById('status-pulse');
             const hostAvatar = document.getElementById('host-avatar'); const hostTitle = document.getElementById('host-title');
             
+            if (status === "invalid_key") {
+                alert("❌ CLAVE INCORRECTA. Acceso denegado.");
+                return;
+            }
+
             if (status === "connected") {
                 sText.innerText = "SISTEMA ONLINE"; sText.className = "text-[10px] uppercase tracking-[3px] text-cyan-400 font-bold italic";
                 sPulse.className = "w-2 h-2 rounded-full bg-cyan-400 animate-ping";
@@ -355,6 +375,13 @@
                 document.getElementById('btn-connect').classList.remove('hidden'); document.getElementById('btn-disconnect').classList.add('hidden');
                 hostAvatar.src = "/Logo.png"; hostAvatar.classList.remove('border-cyan-500', 'shadow-[0_0_15px_rgba(0,255,255,0.4)]');
                 hostTitle.innerHTML = `NEXORA <span class="text-cyan-500">LIVE</span>`;
+                
+                // Ocultar botones y borrar sesión al desconectar
+                document.getElementById('enlaces-protegidos').classList.add('hidden');
+                document.getElementById('enlaces-protegidos').classList.remove('flex');
+                document.getElementById('badge-admin').classList.add('hidden');
+                sessionStorage.removeItem('accesoPermitido');
+                sessionStorage.removeItem('rolUsuario');
             }
         });
 
