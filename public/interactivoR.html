@@ -159,6 +159,18 @@ background:#00ffff;
 color:black;
 }
 
+/* ESTILO DEL BOTÓN BORRAR */
+.delete-btn {
+background: #ff3366; 
+color: white;
+margin-left: 5px;
+}
+
+.delete-btn:hover {
+background: #ff0033;
+box-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
+}
+
 .save{
 margin-top:20px;
 width:100%;
@@ -191,7 +203,7 @@ LEXORA <span style="color:#8A2BE2">INTERACTIVE</span>
 <option value="gift">🎁 Gift</option>
 <option value="like">❤️ Like</option>
 <option value="follow">➕ Follow</option>
-<option value="win">🏆 Win</option> </select>
+<option value="win">🏆 Win</option> 
 </select>
 
 <div id="giftSelector" class="selector">
@@ -209,7 +221,7 @@ LEXORA <span style="color:#8A2BE2">INTERACTIVE</span>
 
 <table class="table" id="table"></table>
 
-<button class="save" onclick="save()">Guardar</button>
+<button class="save" onclick="save()">Guardar Cambios</button>
 
 </div>
 
@@ -220,44 +232,44 @@ let selectedGift = ""
 let giftImages = {}
 
 function getUser(){
-const user = document.getElementById("robloxUser").value.trim()
-const code = document.getElementById("adminCode").value.trim()
+    const user = document.getElementById("robloxUser").value.trim()
+    const code = document.getElementById("adminCode").value.trim()
 
-if(user.toLowerCase() === "todos"){
-if(code !== "admin24"){
-alert("Código admin incorrecto 🚫")
-return null
-}
-return "ALL_USERS"
-}
-return user
+    if(user.toLowerCase() === "todos"){
+        if(code !== "admin24"){
+            alert("Código admin incorrecto 🚫")
+            return null
+        }
+        return "ALL_USERS"
+    }
+    return user
 }
 
 function toggleDropdown(){
-const d = document.getElementById("dropdown")
-d.style.display = d.style.display === "block" ? "none" : "block"
+    const d = document.getElementById("dropdown")
+    d.style.display = d.style.display === "block" ? "none" : "block"
 }
 
 async function loadGifts(){
-const res = await fetch("/gift-list")
-const gifts = await res.json()
-const dropdown = document.getElementById("dropdown")
+    const res = await fetch("/gift-list")
+    const gifts = await res.json()
+    const dropdown = document.getElementById("dropdown")
 
-gifts.forEach(g=>{
-giftImages[g.name.toLowerCase()] = g.image
+    gifts.forEach(g=>{
+        giftImages[g.name.toLowerCase()] = g.image
 
-const div = document.createElement("div")
-div.className = "item"
-div.innerHTML = `<img src="${g.image}"><span>${g.name}</span>`
+        const div = document.createElement("div")
+        div.className = "item"
+        div.innerHTML = `<img src="${g.image}"><span>${g.name}</span>`
 
-div.onclick = ()=>{
-selectedGift = g.name
-document.getElementById("selectedText").innerText = g.name
-dropdown.style.display = "none"
-}
+        div.onclick = ()=>{
+            selectedGift = g.name
+            document.getElementById("selectedText").innerText = g.name
+            dropdown.style.display = "none"
+        }
 
-dropdown.appendChild(div)
-})
+        dropdown.appendChild(div)
+    })
 }
 
 loadGifts()
@@ -265,100 +277,117 @@ loadGifts()
 const table = document.getElementById("table")
 
 function render(){
+    const user = getUser()
 
-const user = getUser()
+    table.innerHTML = `
+    <tr>
+    <th>Usuario</th>
+    <th>Tipo</th>
+    <th>Nombre</th>
+    <th>Parts</th>
+    <th>Meta</th>
+    <th>Test</th>
+    <th>Borrar</th>
+    </tr>
+    `
 
-table.innerHTML = `
-<tr>
-<th>Usuario</th>
-<th>Tipo</th>
-<th>Nombre</th>
-<th>Parts</th>
-<th>Meta</th>
-<th>Test</th>
-</tr>
-`
+    if(!user || !allEvents[user]) return
 
-if(!user || !allEvents[user]) return
+    Object.keys(allEvents[user]).forEach(name=>{
+        const e = allEvents[user][name]
+        const img = giftImages[name?.toLowerCase()]
 
-Object.keys(allEvents[user]).forEach(name=>{
+        const row = document.createElement("tr")
+        row.className="row"
 
-const e = allEvents[user][name]
-const img = giftImages[name?.toLowerCase()]
+        row.innerHTML = `
+        <td>${user}</td>
+        <td>${e.type}</td>
+        <td>${img?`<img src="${img}" style="width:25px">`:""} ${name}</td>
+        <td><input value="${e.parts}" onchange="update('${name}',this.value)" style="width:60px;"></td>
+        <td>${e.targetLikes||"-"}</td>
+        <td>
+            <input id="test-${name}" value="1" style="width:40px;">
+            <button class="btn test" onclick="test('${name}')">TEST</button>
+        </td>
+        <td>
+            <button class="btn delete-btn" onclick="deleteEvent('${name}')">🗑️ Borrar</button>
+        </td>
+        `
 
-const row = document.createElement("tr")
-row.className="row"
-
-row.innerHTML = `
-<td>${user}</td>
-<td>${e.type}</td>
-<td>${img?`<img src="${img}" style="width:25px">`:""} ${name}</td>
-<td><input value="${e.parts}" onchange="update('${name}',this.value)"></td>
-<td>${e.targetLikes||"-"}</td>
-<td><input id="test-${name}" value="1">
-<button class="btn test" onclick="test('${name}')">TEST</button></td>
-`
-
-table.appendChild(row)
-})
+        table.appendChild(row)
+    })
 }
 
 function add(){
-const user = getUser()
-if(!user) return
+    const user = getUser()
+    if(!user) return
 
-const type = document.getElementById("type").value
-const parts = Number(document.getElementById("newParts").value)
-const targetLikes = Number(document.getElementById("targetLikes").value)
+    const type = document.getElementById("type").value
+    const parts = Number(document.getElementById("newParts").value)
+    const targetLikes = Number(document.getElementById("targetLikes").value)
 
-if(!allEvents[user]) allEvents[user] = {}
+    if(!allEvents[user]) allEvents[user] = {}
 
-let key = type==="gift"?selectedGift:type==="like"?"like_"+targetLikes:"follow"
+    let key = type==="gift"?selectedGift:type==="like"?"like_"+targetLikes:"follow"
 
-allEvents[user][key]={
-type,
-parts,
-targetLikes,
-robloxUser:user
-}
+    allEvents[user][key]={
+        type,
+        parts,
+        targetLikes,
+        robloxUser:user
+    }
 
-render()
+    render()
 }
 
 function update(name,value){
-const user=getUser()
-allEvents[user][name].parts=Number(value)
+    const user=getUser()
+    allEvents[user][name].parts=Number(value)
 }
 
 function test(name){
-const user=getUser()
-const e=allEvents[user][name]
-const amount=Number(document.getElementById("test-"+name).value)
+    const user=getUser()
+    const e=allEvents[user][name]
+    const amount=Number(document.getElementById("test-"+name).value)
 
-fetch("/test",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-gift:name,
-repeatCount:amount,
-parts:e.parts,
-type:e.type,
-targetLikes:e.targetLikes,
-robloxUser:user
-})
-})
+    fetch("/test",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            gift:name,
+            repeatCount:amount,
+            parts:e.parts,
+            type:e.type,
+            targetLikes:e.targetLikes,
+            robloxUser:user
+        })
+    })
+}
+
+// NUEVA FUNCIÓN PARA BORRAR EVENTOS
+function deleteEvent(name) {
+    const user = getUser()
+    
+    if(!user || !allEvents[user] || !allEvents[user][name]) return
+    
+    if(confirm(`¿Estás seguro de que quieres borrar el evento: ${name}?`)) {
+        delete allEvents[user][name] 
+        render() 
+        save() // Autoguardado al borrar para evitar perder datos
+    }
 }
 
 function save(){
-localStorage.setItem("eventsByUser",JSON.stringify(allEvents))
-alert("Guardado 🔥")
+    localStorage.setItem("eventsByUser",JSON.stringify(allEvents))
+    alert("Guardado 🔥")
 }
 
 function filter(){
-const s=document.getElementById("search").value.toLowerCase()
-document.querySelectorAll(".row").forEach(r=>{
-r.style.display=r.innerText.toLowerCase().includes(s)?"":"none"
-})
+    const s=document.getElementById("search").value.toLowerCase()
+    document.querySelectorAll(".row").forEach(r=>{
+        r.style.display=r.innerText.toLowerCase().includes(s)?"":"none"
+    })
 }
 
 document.getElementById("robloxUser").addEventListener("input",render)
